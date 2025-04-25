@@ -1,0 +1,6 @@
+{
+  "name": "mru-socket-server",
+  "private": true,
+  "main": "../dist/server/index.js",
+  "types": "../dist/server/index.d.ts"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "ui",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "react": "^18.2.0",
+    "tailwindcss": "^3.4.1",
+    "shadcn-ui": "^0.4.0"
+  }
+}

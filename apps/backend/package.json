@@ -1,0 +1,17 @@
+{
+  "name": "backend",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "zod": "^3.22.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "typescript": "^5.0.0"
+  }
+}

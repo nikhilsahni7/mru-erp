@@ -1,0 +1,11 @@
+{
+  "name": "db",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "ioredis": "^5.3.2",
+    "prisma": "^5.0.0"
+  }
+}
