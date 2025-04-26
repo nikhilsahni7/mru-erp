@@ -1,9 +1,9 @@
 import { disconnectRedis } from 'db/redis';
-import express, { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import http from 'http';
 import { closeSocketServer, createSocketServer } from 'mru-socket/server';
+import app from './app';
 
-const app = express();
 
 // Add CORS middleware
 app.use((req, res, next) => {
