@@ -1,17 +1,30 @@
+import cookieParser from "cookie-parser";
+import cors from 'cors';
 import { disconnectRedis } from 'db/redis';
 import type { Request, Response } from 'express';
+import express from "express";
 import http from 'http';
 import { closeSocketServer, createSocketServer } from 'mru-socket/server';
-import app from './app';
+import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
+
+const app = express();
 
 
-// Add CORS middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  exposedHeaders: ['Set-Cookie']
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
 
 const server = http.createServer(app);
 const io = createSocketServer(server);
