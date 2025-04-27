@@ -5,8 +5,10 @@ import type { Request, Response } from 'express';
 import express from "express";
 import http from 'http';
 import { closeSocketServer, createSocketServer } from 'mru-socket/server';
+import attendanceRoutes from "./routes/attendance.routes";
 import authRoutes from "./routes/auth.routes";
 import studentRoutes from "./routes/student.routes";
+import teacherRoutes from "./routes/teacher.routes";
 import userRoutes from "./routes/user.routes";
 
 const app = express();
@@ -27,6 +29,8 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/student", studentRoutes);
+app.use("/api/v1/teacher", teacherRoutes);
+app.use("/api/v1/attendance", attendanceRoutes);
 
 const server = http.createServer(app);
 const io = createSocketServer(server);
