@@ -227,7 +227,7 @@ export default function DashboardLayout({
           <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b bg-background px-6 md:flex">
             <h1 className="text-xl font-semibold">
               {pathname === "/dashboard"
-                ? "Dashboard"
+                ? ""
                 : navItems.find((item) => pathname === item.href)?.label ||
                   "Dashboard"}
             </h1>

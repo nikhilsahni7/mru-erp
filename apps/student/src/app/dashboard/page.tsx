@@ -1,11 +1,36 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CoursesList } from "@/components/student/courses-list";
+import { CurrentClass } from "@/components/student/current-class";
+import { StudentProfileCard } from "@/components/student/student-profile-card";
+import { TodayClasses } from "@/components/student/today-classes";
+import { WeeklyTimetable } from "@/components/student/weekly-timetable";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { BookOpen, Calendar, Clock, FileText, GraduationCap, LineChart, Loader2, User } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { user, isLoadingUser, isError } = useAuth();
+  const { user, isLoadingUser, isError, error } = useAuth();
+  const router = useRouter();
+
+  // Handle auth errors with proper feedback, but only if we attempted to load
+  useEffect(() => {
+    if (isError && error && !isLoadingUser) {
+      const errorMessage = error?.response?.data?.message || "Authentication failed. Please login again.";
+      toast.error(errorMessage);
+
+      // Redirect to login after a short delay to allow toast to be visible
+      const timeout = setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isError, error, router, isLoadingUser]);
 
   if (isLoadingUser) {
     return (
@@ -18,220 +43,91 @@ export default function DashboardPage() {
     );
   }
 
-  if (isError) {
-    if (typeof window !== "undefined") {
-      window.location.replace("/login");
-    }
+  // Only show the error UI if we've actually attempted to load and failed
+  if (isError && !isLoadingUser) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-2 text-destructive">
+            <AlertTriangle className="h-10 w-10" />
+            <h2 className="text-xl font-bold">Authentication Error</h2>
+            <p className="text-center text-muted-foreground max-w-sm">
+              There was a problem with your session. You'll be redirected to the login page.
+            </p>
+          </div>
+          <Button onClick={() => router.push("/login")} className="mt-2">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Safeguard - if somehow we don't have user data but also no error, redirect to login
+  if (!user && !isLoadingUser) {
+    router.push("/login");
     return null;
   }
 
+  // Format date for display
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString("en-US", {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Welcome section */}
-      <section className="rounded-lg bg-gradient-to-r from-primary to-accent p-6 text-primary-foreground shadow-md">
-        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome back, {user?.name || "Student"}!</h1>
-            <p className="text-primary-foreground/90">
-              Here's what's happening with your academic journey today.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 rounded-lg bg-white/10 p-2 backdrop-blur-sm">
-            <Clock className="h-5 w-5" />
-            <span>{new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-          </div>
+      <section className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-1">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome to your academic portal
+          </p>
+        </div>
+        <div className="bg-muted/40 text-muted-foreground py-1 px-3 rounded-md border text-sm font-medium">
+          {formattedDate}
         </div>
       </section>
 
-      {/* Stats section */}
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Attendance</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">87%</div>
-            <p className="text-xs text-muted-foreground">
-              +2% from last semester
-            </p>
-          </CardContent>
-        </Card>
+      {/* Main dashboard content */}
+      <Tabs defaultValue="overview" className="space-y-8">
+        <TabsList className="w-full justify-start bg-background border-b rounded-none h-12 px-4">
+          <TabsTrigger value="overview" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">Overview</TabsTrigger>
+          <TabsTrigger value="timetable" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">Timetable</TabsTrigger>
+          <TabsTrigger value="courses" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent">My Courses</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">GPA</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3.8/4.0</div>
-            <p className="text-xs text-muted-foreground">
-              Top 15% of your class
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Courses</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">6</div>
-            <p className="text-xs text-muted-foreground">
-              18 credit hours this semester
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Assignments</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              Due this week
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Schedule and Courses section */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Today's Schedule */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Today's Schedule</CardTitle>
-            <CardDescription>Your classes for today</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  id: 1,
-                  subject: "Computer Science 101",
-                  time: "09:00 AM - 10:30 AM",
-                  location: "Room 302, CS Building",
-                  professor: "Dr. Johnson",
-                },
-                {
-                  id: 2,
-                  subject: "Data Structures and Algorithms",
-                  time: "11:00 AM - 12:30 PM",
-                  location: "Room 405, Engineering Building",
-                  professor: "Prof. Smith",
-                },
-                {
-                  id: 3,
-                  subject: "Database Management Systems",
-                  time: "02:00 PM - 03:30 PM",
-                  location: "Lab 201, CS Building",
-                  professor: "Dr. Williams",
-                },
-              ].map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col rounded-lg border p-3 shadow-sm"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">{item.subject}</h3>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {item.time}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{item.location}</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <User className="h-3 w-3" />
-                      <span>{item.professor}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Progress chart */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Academic Progress</CardTitle>
-            <CardDescription>Your performance over time</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col">
-            <div className="flex aspect-square items-center justify-center rounded-lg bg-muted p-8">
-              <LineChart className="h-12 w-12 text-muted-foreground" />
-              <span className="mt-2 text-center text-sm text-muted-foreground">Academic progress chart will be shown here</span>
+        <TabsContent value="overview" className="m-0 space-y-8">
+          {/* Profile and Quick Info */}
+          <div className="grid gap-6 md:grid-cols-7 lg:grid-cols-12">
+            {/* Profile Card - Larger on bigger screens */}
+            <div className="md:col-span-3 lg:col-span-4">
+              <StudentProfileCard />
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center justify-center rounded-lg border p-4">
-                <div className="text-xl font-bold">87%</div>
-                <div className="text-xs text-muted-foreground">Assignments</div>
-              </div>
-              <div className="flex flex-col items-center justify-center rounded-lg border p-4">
-                <div className="text-xl font-bold">92%</div>
-                <div className="text-xs text-muted-foreground">Exams</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            {/* Summary Widgets */}
+            <div className="md:col-span-4 lg:col-span-8 space-y-6">
+              {/* Current class info */}
+              <CurrentClass />
 
-      {/* Upcoming Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Events</CardTitle>
-          <CardDescription>Important dates and deadlines</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {[
-                {
-                  id: 1,
-                  title: "Mid-Term Exams",
-                  date: "October 15-20, 2024",
-                  description:
-                    "Prepare for your mid-term exams. Check the schedule for specific times.",
-                },
-                {
-                  id: 2,
-                  title: "Project Submission",
-                  date: "November 5, 2024",
-                  description:
-                    "Final deadline for the semester project submission.",
-                },
-                {
-                  id: 3,
-                  title: "Career Fair",
-                  date: "November 12, 2024",
-                  description:
-                    "Annual career fair with representatives from top companies.",
-                },
-              ].map((event) => (
-                <div
-                  key={event.id}
-                  className="flex flex-col rounded-lg border p-4 shadow-sm"
-                >
-                  <h3 className="font-semibold">{event.title}</h3>
-                  <div className="mt-1 text-sm font-medium text-primary">
-                    {event.date}
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {event.description}
-                  </p>
-                </div>
-              ))}
+              {/* Today's classes */}
+              <TodayClasses />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="timetable" className="m-0">
+          <WeeklyTimetable />
+        </TabsContent>
+
+        <TabsContent value="courses" className="m-0">
+          <CoursesList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

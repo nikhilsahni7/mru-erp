@@ -6,6 +6,7 @@ import express from "express";
 import http from 'http';
 import { closeSocketServer, createSocketServer } from 'mru-socket/server';
 import authRoutes from "./routes/auth.routes";
+import studentRoutes from "./routes/student.routes";
 import userRoutes from "./routes/user.routes";
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/student", studentRoutes);
 
 const server = http.createServer(app);
 const io = createSocketServer(server);

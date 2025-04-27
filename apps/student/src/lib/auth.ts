@@ -35,7 +35,7 @@ const isBrowser = () => typeof window !== "undefined";
 
 export const AuthService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>("/auth/login", credentials);
+    const response = await api.post<AuthResponse>("/auth/student/login", credentials);
     return response.data;
   },
 
@@ -74,4 +74,11 @@ export const AuthService = {
     }
   },
 
+  // Clear any refresh state (timers, cache, etc.)
+  clearRefreshState(): void {
+    // This function is called when manually logging out
+    // Here we would clear any related state like refresh timers
+    // Currently doesn't need to do anything as our refresh logic
+    // is handled by axios interceptors
+  }
 };
