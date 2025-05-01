@@ -130,12 +130,19 @@ export class TeacherService {
 
     // Format and combine the results
     const formatSchedule = (schedule: any) => {
+      // Format time values as HH:MM strings
+      const formatTimeToString = (dateObj: Date): string => {
+        const hours = dateObj.getHours().toString().padStart(2, '0');
+        const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      };
+
       return {
         courseCode: schedule.component.sectionCourse.course.code,
         courseName: schedule.component.sectionCourse.course.name,
         componentType: schedule.component.componentType,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
+        startTime: formatTimeToString(schedule.startTime),
+        endTime: formatTimeToString(schedule.endTime),
         roomNumber: schedule.roomNumber,
         section: {
           name: schedule.component.sectionCourse.section.name,
@@ -153,9 +160,9 @@ export class TeacherService {
       ...uniqueComponentSchedules.map(formatSchedule)
     ];
 
-    // Sort by start time
+    // Sort by start time using string comparison instead of Date.getTime()
     return combinedSchedules.sort((a, b) =>
-      a.startTime.getTime() - b.startTime.getTime()
+      a.startTime.localeCompare(b.startTime)
     );
   }
 
@@ -234,10 +241,9 @@ export class TeacherService {
     // Calculate current time in minutes for comparison (e.g., 9:30 AM = 9*60 + 30 = 570 minutes)
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
-    // Helper function to convert time to minutes
-    const timeToMinutes = (date: Date) => {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
+    // Helper function to convert time string to minutes
+    const timeToMinutes = (timeString: string) => {
+      const [hours, minutes] = timeString.split(":").map(Number);
       return hours * 60 + minutes;
     };
 
@@ -246,8 +252,8 @@ export class TeacherService {
     const upcomingClasses = [];
 
     for (const cls of todayClasses) {
-      const startTimeInMinutes = timeToMinutes(new Date(cls.startTime));
-      const endTimeInMinutes = timeToMinutes(new Date(cls.endTime));
+      const startTimeInMinutes = timeToMinutes(cls.startTime);
+      const endTimeInMinutes = timeToMinutes(cls.endTime);
 
       // If class is ongoing
       if (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes) {
@@ -261,7 +267,7 @@ export class TeacherService {
 
     // Sort upcoming classes by start time and limit to next 3
     upcomingClasses.sort((a, b) =>
-      timeToMinutes(new Date(a.startTime)) - timeToMinutes(new Date(b.startTime))
+      timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
     );
 
     return {
@@ -450,6 +456,13 @@ export class TeacherService {
       }
     });
 
+    // Helper function to format time as string
+    const formatTimeToString = (dateObj: Date): string => {
+      const hours = dateObj.getHours().toString().padStart(2, '0');
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+
     // Format the response
     return components.map(component => {
       return {
@@ -470,8 +483,8 @@ export class TeacherService {
         } : null,
         schedules: component.schedules.map(schedule => ({
           day: schedule.dayOfWeek,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
+          startTime: formatTimeToString(schedule.startTime),
+          endTime: formatTimeToString(schedule.endTime),
           roomNumber: schedule.roomNumber
         }))
       };

@@ -684,6 +684,61 @@ export class AttendanceService {
     };
   }
 
+  static async getAttendanceRecord(recordId: string): Promise<any> {
+    const record = await prisma.attendanceRecord.findUnique({
+      where: { id: recordId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            rollNo: true,
+            group: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        attendanceSession: {
+          include: {
+            component: {
+              include: {
+                sectionCourse: {
+                  include: {
+                    course: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!record) {
+      return null;
+    }
+
+    return {
+      id: record.id,
+      status: record.status,
+      remark: record.remark,
+      student: record.student,
+      course: {
+        id: record.attendanceSession.component.sectionCourse.course.id,
+        code: record.attendanceSession.component.sectionCourse.course.code,
+        name: record.attendanceSession.component.sectionCourse.course.name
+      },
+      session: {
+        id: record.attendanceSessionId,
+        date: record.attendanceSession.date,
+        componentType: record.attendanceSession.component.componentType
+      }
+    };
+  }
+
   static async getAttendanceByDateRange(componentId: string, startDate: Date, endDate: Date): Promise<any> {
     // Get component details
     const component = await prisma.courseComponent.findUnique({

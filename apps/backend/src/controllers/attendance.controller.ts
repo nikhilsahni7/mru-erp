@@ -382,6 +382,49 @@ export class AttendanceController {
     }
   }
 
+  static async getAttendanceRecord(req: Request, res: Response) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+      }
+
+      const teacherId = req.user.id;
+      const { recordId } = req.params;
+
+      if (!recordId) {
+        return res.status(400).json({
+          error: "Missing record ID",
+          message: "Record ID is required"
+        });
+      }
+
+      // Verify the teacher can access this record
+      const isAuthorized = await AttendanceService.verifyTeacherForRecord(teacherId, recordId);
+      if (!isAuthorized) {
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "You are not authorized to access this attendance record"
+        });
+      }
+
+      const record = await AttendanceService.getAttendanceRecord(recordId);
+      if (!record) {
+        return res.status(404).json({
+          error: "Record not found",
+          message: "The attendance record could not be found"
+        });
+      }
+
+      res.status(200).json(record);
+    } catch (error) {
+      console.error("Error fetching attendance record:", error);
+      res.status(500).json({
+        error: "Failed to fetch attendance record",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  }
+
   static async getAttendanceByDateRange(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {

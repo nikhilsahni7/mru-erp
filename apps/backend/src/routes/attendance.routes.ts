@@ -52,6 +52,11 @@ router.put("/record/:recordId", async (req, res) => {
   await AttendanceController.updateAttendanceRecord(req, res);
 });
 
+// Get a single attendance record
+router.get("/record/:recordId", async (req, res) => {
+  await AttendanceController.getAttendanceRecord(req, res);
+});
+
 // Get attendance by date range for a component
 router.get("/range/:componentId", async (req, res) => {
   await AttendanceController.getAttendanceByDateRange(req, res);

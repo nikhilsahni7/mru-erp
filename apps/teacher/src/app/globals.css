@@ -1,0 +1,158 @@
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  :root {
+    --radius: 0.625rem;
+    --background: #fbfbfe;
+    --foreground: #050315;
+    --card: #fbfbfe;
+    --card-foreground: #050315;
+    --popover: #fbfbfe;
+    --popover-foreground: #050315;
+    --primary: #2f27ce;
+    --primary-foreground: #fbfbfe;
+    --secondary: #dedcff;
+    --secondary-foreground: #050315;
+    --muted: #f1f1f8;
+    --muted-foreground: #5b5784;
+    --accent: #433bff;
+    --accent-foreground: #fbfbfe;
+    --destructive: #ff3b3b;
+    --destructive-foreground: #fbfbfe;
+    --border: #e0e0ea;
+    --input: #e0e0ea;
+    --ring: #2f27ce;
+    /* Chart colors */
+    --chart-1: #2f27ce;
+    --chart-2: #433bff;
+    --chart-3: #6c63ff;
+    --chart-4: #8b85ff;
+    --chart-5: #aaa6ff;
+    /* Sidebar colors */
+    --sidebar: #fbfbfe;
+    --sidebar-foreground: #050315;
+    --sidebar-primary: #2f27ce;
+    --sidebar-primary-foreground: #fbfbfe;
+    --sidebar-accent: #dedcff;
+    --sidebar-accent-foreground: #050315;
+    --sidebar-border: #e0e0ea;
+    --sidebar-ring: #2f27ce;
+  }
+
+  .dark {
+    --background: #050315;
+    --foreground: #fbfbfe;
+    --card: #0f0c35;
+    --card-foreground: #fbfbfe;
+    --popover: #0f0c35;
+    --popover-foreground: #fbfbfe;
+    --primary: #433bff;
+    --primary-foreground: #fbfbfe;
+    --secondary: #1a1644;
+    --secondary-foreground: #fbfbfe;
+    --muted: #161231;
+    --muted-foreground: #8a84bc;
+    --accent: #2f27ce;
+    --accent-foreground: #fbfbfe;
+    --destructive: #ff5c5c;
+    --destructive-foreground: #fbfbfe;
+    --border: rgba(251, 251, 254, 0.1);
+    --input: rgba(251, 251, 254, 0.15);
+    --ring: #433bff;
+    /* Chart colors */
+    --chart-1: #433bff;
+    --chart-2: #5c55ff;
+    --chart-3: #7570ff;
+    --chart-4: #8e8aff;
+    --chart-5: #a7a4ff;
+    /* Sidebar colors */
+    --sidebar: #0f0c35;
+    --sidebar-foreground: #fbfbfe;
+    --sidebar-primary: #433bff;
+    --sidebar-primary-foreground: #fbfbfe;
+    --sidebar-accent: #1a1644;
+    --sidebar-accent-foreground: #fbfbfe;
+    --sidebar-border: rgba(251, 251, 254, 0.1);
+    --sidebar-ring: #433bff;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted rounded-lg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
