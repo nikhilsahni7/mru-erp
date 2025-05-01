@@ -82,35 +82,41 @@ export function LoginForm() {
       await login.mutateAsync(values);
     } catch (error: any) {
       console.error("Login error:", error);
+      // Log the full error response if available
+      if (error.response) {
+        console.error("Backend Response Status:", error.response.status);
+        console.error("Backend Response Data:", error.response.data);
+      } else {
+        console.error("Error details:", error.message);
+      }
 
       // Get the error message from the response
-      const errorMessage = error?.response?.data?.message || "Invalid credentials";
-      console.log("Error message:", errorMessage);
+      const errorMessage = error?.response?.data?.message || "An unknown error occurred";
+      console.log("Extracted Backend error message:", errorMessage);
 
-      // Specifically check for student login attempts
-      if (errorMessage.includes("Only teacher accounts can login") ||
-          errorMessage.includes("Only TEACHER accounts") ||
-          errorMessage.toLowerCase().includes("student")) {
+      let displayError = ""; // Error message to show the user
+
+      // Check for specific backend messages
+      if (errorMessage === "Unauthorized: Only teacher accounts can login through this portal") {
         console.log("Student attempted to log in to teacher portal");
         setRoleError(true);
-        setLoginError("This portal is exclusively for faculty members. Students cannot access this portal.");
-      }
-      // Check for other role/permission errors
-      else if (error?.response?.status === 403 ||
-               errorMessage.includes("Unauthorized") ||
-               errorMessage.includes("permission")) {
-        setRoleError(true);
-        setLoginError("You do not have permission to access the teacher portal. This portal is only for faculty members.");
-      }
-      // Handle general errors
-      else {
-        setLoginError(errorMessage);
+        // Use a specific message for the student access denied alert
+        displayError = "This portal is exclusively for faculty members. Students cannot access this portal.";
+        // We'll rely on the roleError state to show the detailed alert
+      } else if (errorMessage === "Invalid credentials") {
+        displayError = "Invalid Teacher ID or Password. Please try again.";
+      } else {
+        // Fallback for other errors (including network issues, server errors, etc.)
+        displayError = errorMessage || "Login failed due to an unexpected error.";
       }
 
+      // Set the error state for the form (displayed if not a roleError)
+      setLoginError(displayError);
       form.setError("root", {
         type: "manual",
-        message: errorMessage
+        message: displayError
       });
+
     } finally {
       setIsSubmitting(false);
     }

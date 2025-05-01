@@ -38,13 +38,21 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Check if the error is due to an expired token
-    if (error.response?.status === 401 && !(originalRequest as any)._retry) {
+    // Define login paths that should not trigger a refresh on 401
+    const loginPaths = ["/auth/login", "/auth/student/login", "/auth/teacher/login"];
+
+    // Check if the error is 401, it hasn't been retried yet,
+    // AND the original request was NOT to a login path
+    if (error.response?.status === 401 && !(originalRequest as any)._retry &&
+        originalRequest.url && !loginPaths.some(path => originalRequest.url?.endsWith(path)))
+    {
       (originalRequest as any)._retry = true;
+      console.log("Attempting token refresh for original request:", originalRequest.url);
 
       try {
         // Call refresh token endpoint
         await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        console.log("Token refresh successful, retrying original request");
 
         // Retry the original request
         return api(originalRequest);
