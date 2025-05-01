@@ -1,144 +1,144 @@
-import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 import { toast } from "sonner";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
-export const api = axios.create({
-  baseURL,
+export const api: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // Important for cookies
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
-  // Add a timeout to prevent hanging requests
-  timeout: 10000, // 10 seconds
 });
 
-// Track if we're currently refreshing to prevent multiple refresh requests
-let isRefreshing = false;
-// Queue of requests to retry after token refresh
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-// Function to process the queue of failed requests
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach(callback => callback(token));
-  refreshSubscribers = [];
-};
-
-// Helper to determine if we're on the login page
-const isLoginPage = () => {
-  if (typeof window === 'undefined') return false;
-  return window.location.pathname === '/login' || window.location.pathname === '/';
-};
-
-// Add a request interceptor
+// Add a request interceptor to include auth token
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
+    // Get token from localStorage or cookies if needed
+    // const token = localStorage.getItem("accessToken");
+    // if (token) {
+    //   config.headers.Authorization = `Bearer ${token}`;
+    // }
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Add a response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    return response;
+  },
   async (error: AxiosError) => {
-    // Add detailed logging for debugging
-    if (error.response) {
-      console.error('API Error Response:', {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data,
-        url: error.config?.url,
-        method: error.config?.method
-      });
-    } else if (error.request) {
-      console.error('API Request Error (No Response):', {
-        request: error.request,
-        url: error.config?.url,
-        method: error.config?.method
-      });
-    } else {
-      console.error('API Error Setup:', error.message);
-    }
+    const originalRequest = error.config;
 
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-
-    // If we can't access the request config, just reject
-    if (!originalRequest) return Promise.reject(error);
-
-    // Don't retry these endpoints to avoid infinite loops
-    const noRetryEndpoints = ['/auth/login', '/auth/refresh', '/auth/logout', '/auth/student/login', '/auth/teacher/login'];
-    if (noRetryEndpoints.some(endpoint => originalRequest.url?.includes(endpoint))) {
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // Skip refresh attempts if we're on the login page
-    if (isLoginPage()) {
-      return Promise.reject(error);
-    }
+    // Check if the error is due to an expired token
+    if (error.response?.status === 401 && !(originalRequest as any)._retry) {
+      (originalRequest as any)._retry = true;
 
-    // If the error is due to an expired token (401) and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Mark this request as retried
-      originalRequest._retry = true;
+      try {
+        // Call refresh token endpoint
+        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
 
-      // If we're not already refreshing, try to refresh the token
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        try {
-          // Attempt to refresh the token - this will update the HTTP-only cookie
-          const refreshResponse = await api.post("/auth/refresh");
-          const newToken = refreshResponse.data.accessToken;
-
-          // Notify all subscribers that we have a new token
-          onRefreshed(newToken);
-          isRefreshing = false;
-
-          // Add the new token to the original request (although it's in cookies, some APIs might still check headers)
-          if (originalRequest.headers) {
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-          }
-
-          // Retry the original request with the new token
-          return api(originalRequest);
-        } catch (refreshError: any) {
-          isRefreshing = false;
-
-          // Clear the queue on failure
-          refreshSubscribers = [];
-
-          // Don't show error toast or redirect if we're already on the login page
-          if (!isLoginPage()) {
-            // Show user-friendly message based on the error
-            const errorMessage = refreshError?.response?.data?.message || "Session expired, please login again";
-            toast.error(errorMessage);
-
-            // Redirect to login after a short delay so user can see the message
-            if (typeof window !== "undefined") {
-              setTimeout(() => {
-                window.location.href = "/login";
-              }, 1500);
-            }
-          }
-
-          return Promise.reject(refreshError);
+        // Retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh token is also expired, redirect to login
+        console.error("Refresh token failed:", refreshError);
+        // Handle logout/redirect to login here
+        if (typeof window !== "undefined") {
+          toast.error("Your session has expired. Please login again.");
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
         }
-      } else {
-        // If we are already refreshing, add this request to the queue
-        return new Promise(resolve => {
-          refreshSubscribers.push((token: string) => {
-            // Add the new token to the original request
-            if (originalRequest.headers) {
-              originalRequest.headers['Authorization'] = `Bearer ${token}`;
-            }
-            resolve(api(originalRequest));
-          });
-        });
+        return Promise.reject(refreshError);
       }
     }
 
-    // For other errors, just pass through
+    // Return any other error
     return Promise.reject(error);
   }
 );
+
+// Create service functions for API calls
+export const ApiService = {
+
+
+  // Teacher LoginCredentials
+  teacherLogin: (credentials: { rollNo: string; password: string }) =>
+    api.post("/auth/teacher/login", credentials),
+
+  logout: () =>
+    api.post("/auth/logout"),
+
+  // Use the user/profile endpoint that correctly handles role-based profiles
+  getProfile: () =>
+    api.get("/user/profile"),
+
+  // Teacher endpoints
+  getCurrentClasses: () =>
+    api.get("/teacher/current"),
+
+  getTodayClasses: () =>
+    api.get("/teacher/today"),
+
+  getDayTimetable: (day: string) =>
+    api.get(`/teacher/timetable/${day}`),
+
+  getComponents: (day: string) =>
+    api.get(`/teacher/components/${day}`),
+
+  // Attendance endpoints
+  getTodaySessions: () =>
+    api.get("/attendance/today"),
+
+  getAttendanceSession: (sessionId: string) =>
+    api.get(`/attendance/session/${sessionId}`),
+
+  getStudentsByComponent: (componentId: string) =>
+    api.get(`/attendance/students/${componentId}`),
+
+  createAttendanceSession: (data: {
+    componentId: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    topic?: string;
+  }) =>
+    api.post('/attendance/session', data),
+
+  markAttendance: (data: {
+    sessionId: string;
+    attendanceRecords: Array<{
+      studentId: string;
+      status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
+      remark?: string;
+    }>;
+  }) =>
+    api.post(`/attendance/mark`, data),
+
+  updateAttendanceRecord: (recordId: string, data: {
+    status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
+    remark?: string;
+  }) =>
+    api.put(`/attendance/record/${recordId}`, data),
+
+  getAttendanceSessionsByDateRange: (startDate: Date, endDate: Date) =>
+    api.get(`/attendance/sessions`, {
+      params: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      }
+    }),
+
+  getAttendanceRecord: (recordId: string) =>
+    api.get(`/attendance/record/${recordId}`),
+};

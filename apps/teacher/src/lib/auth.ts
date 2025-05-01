@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios";
+import { ApiService } from "@/lib/axios";
 import { jwtDecode } from "jwt-decode";
 
 export interface LoginCredentials {
@@ -7,13 +7,16 @@ export interface LoginCredentials {
 }
 
 export interface User {
-  name: string | null;
-  rollNo: string;
-  branch: string;
-  phone: string | null;
-  clg: string;
-  email: string | null;
-  devices: {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  rollNo?: string;
+  branch?: string;
+  phone?: string | null;
+  clg?: string;
+  avatar?: string;
+  devices?: {
     ip: string;
     userAgent: string;
     loggedInAt: string;
@@ -34,19 +37,44 @@ export interface TokenPayload {
 const isBrowser = () => typeof window !== "undefined";
 
 export const AuthService = {
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>("/auth/teacher/login", credentials);
-    return response.data;
+  // Login a user with rollNo and password
+  login: async (credentials: LoginCredentials): Promise<User> => {
+    try {
+      console.log("Attempting teacher login with:", { rollNo: credentials.rollNo });
+
+      // Use the teacher-specific login endpoint for the teacher app
+      const response = await ApiService.teacherLogin(credentials);
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Teacher login successful, response:", response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
   },
 
-  async logout(): Promise<void> {
-    await api.post("/auth/logout");
-    // The cookie will be cleared by the server response
+  // Logout the current user
+  logout: async (): Promise<void> => {
+    try {
+      await ApiService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
+    }
   },
 
-  async getProfile(): Promise<User> {
-    const response = await api.get<User>("/user/profile");
-    return response.data;
+  // Get the current user's profile
+  getProfile: async (): Promise<User> => {
+    try {
+      const response = await ApiService.getProfile();
+      return response.data;
+    } catch (error) {
+      console.error("Get profile error:", error);
+      throw error;
+    }
   },
 
   isAuthenticated(): boolean {
@@ -80,11 +108,8 @@ export const AuthService = {
     }
   },
 
-  // Clear any refresh state (timers, cache, etc.)
-  clearRefreshState(): void {
-    // This function is called when manually logging out
-    // Here we would clear any related state like refresh timers
-    // Currently doesn't need to do anything as our refresh logic
-    // is handled by axios interceptors
+  // Clear any locally stored auth state (refresh timers, etc.)
+  clearRefreshState: (): void => {
+    // Clear any timers or local state here if needed
   }
 };

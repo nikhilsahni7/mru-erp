@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@/lib/axios";
+import { ApiService } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface ClassScheduleEntry {
@@ -106,7 +106,7 @@ export function useCurrentClasses() {
   return useQuery({
     queryKey: ["teacher", "current-classes"],
     queryFn: async (): Promise<ClassesResponse> => {
-      const response = await api.get("/teacher/current");
+      const response = await ApiService.getCurrentClasses();
       return response.data;
     },
     refetchInterval: 60000, // Refetch every minute to keep current class updated
@@ -117,7 +117,7 @@ export function useTodayClasses() {
   return useQuery({
     queryKey: ["teacher", "today-classes"],
     queryFn: async (): Promise<ClassScheduleEntry[]> => {
-      const response = await api.get("/teacher/today");
+      const response = await ApiService.getTodayClasses();
       return response.data;
     },
   });
@@ -127,7 +127,7 @@ export function useDayTimetable(day: string) {
   return useQuery({
     queryKey: ["teacher", "timetable", day],
     queryFn: async (): Promise<ClassScheduleEntry[]> => {
-      const response = await api.get(`/teacher/timetable/${day}`);
+      const response = await ApiService.getDayTimetable(day);
       return response.data;
     },
     enabled: !!day,
@@ -138,19 +138,18 @@ export function useComponents(day: string) {
   return useQuery({
     queryKey: ["teacher", "components", day],
     queryFn: async (): Promise<Component[]> => {
-      const response = await api.get(`/teacher/components/${day}`);
+      const response = await ApiService.getComponents(day);
       return response.data;
     },
     enabled: !!day,
   });
 }
 
-
 export function useTodaySessions() {
   return useQuery({
     queryKey: ["teacher", "attendance", "today"],
     queryFn: async (): Promise<AttendanceSession[]> => {
-      const response = await api.get(`/attendance/today`);
+      const response = await ApiService.getTodaySessions();
       return response.data;
     },
   });
@@ -161,13 +160,11 @@ export function useAttendanceSession(sessionId: string) {
     queryKey: ["attendance", "session", sessionId],
     queryFn: async () => {
       try {
-        console.log("Fetching attendance session:", sessionId);
         if (!sessionId) {
           console.warn("No sessionId provided to useAttendanceSession");
           return null;
         }
-        const response = await api.get(`/attendance/session/${sessionId}`);
-        console.log("Attendance session API response:", response.data);
+        const response = await ApiService.getAttendanceSession(sessionId);
 
         // Validate that the response contains records
         if (!response.data?.records) {
@@ -183,7 +180,7 @@ export function useAttendanceSession(sessionId: string) {
     enabled: !!sessionId,
     staleTime: 30000, // 30 seconds
     retry: 2
-  })
+  });
 }
 
 export function useStudentsByComponent(componentId: string) {
@@ -191,13 +188,11 @@ export function useStudentsByComponent(componentId: string) {
     queryKey: ["attendance", "students", componentId],
     queryFn: async (): Promise<Student[]> => {
       try {
-        console.log("Fetching students for componentId:", componentId);
         if (!componentId) {
           console.warn("No componentId provided to useStudentsByComponent");
           return [];
         }
-        const response = await api.get(`/attendance/students/${componentId}`);
-        console.log("Students API response:", response.data);
+        const response = await ApiService.getStudentsByComponent(componentId);
         return Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -207,8 +202,6 @@ export function useStudentsByComponent(componentId: string) {
     enabled: !!componentId,
   });
 }
-
-// New hooks for attendance functionality
 
 export function useCreateAttendanceSession() {
   const queryClient = useQueryClient();
@@ -221,7 +214,7 @@ export function useCreateAttendanceSession() {
       endTime: string;
       topic?: string;
     }) => {
-      const response = await api.post('/attendance/session', data);
+      const response = await ApiService.createAttendanceSession(data);
       return response.data;
     },
     onSuccess: (data) => {
@@ -239,7 +232,7 @@ export function useMarkAttendance() {
       sessionId: string;
       attendanceRecords: AttendanceRecord[]
     }) => {
-      const response = await api.post(`/attendance/mark`, data);
+      const response = await ApiService.markAttendance(data);
       return response.data;
     },
     onSuccess: (_, variables) => {
@@ -264,15 +257,13 @@ export function useUpdateAttendanceRecord() {
       status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
       remark?: string;
     }) => {
-      const response = await api.put(`/attendance/record/${data.recordId}`, {
+      const response = await ApiService.updateAttendanceRecord(data.recordId, {
         status: data.status,
         remark: data.remark
       });
       return response.data;
     },
     onSuccess: (data) => {
-      console.log("Record updated successfully:", data);
-
       const sessionId = data.session?.id;
 
       if (sessionId) {
@@ -292,25 +283,19 @@ export function useAttendanceSessionsByDateRange(startDate: Date, endDate: Date)
   return useQuery({
     queryKey: ["attendance", "sessions", startDate.toISOString(), endDate.toISOString()],
     queryFn: async (): Promise<AttendanceSession[]> => {
-      const response = await api.get(`/attendance/sessions`, {
-        params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        }
-      });
+      const response = await ApiService.getAttendanceSessionsByDateRange(startDate, endDate);
       return response.data;
     },
     enabled: !!startDate && !!endDate
   });
 }
 
-// New hook to fetch a single attendance record
 export function useAttendanceRecord(recordId: string) {
   return useQuery({
     queryKey: ["attendance", "record", recordId],
     queryFn: async () => {
       if (!recordId) throw new Error("Record ID is required");
-      const response = await api.get(`/attendance/record/${recordId}`);
+      const response = await ApiService.getAttendanceRecord(recordId);
       return response.data;
     },
     enabled: !!recordId,

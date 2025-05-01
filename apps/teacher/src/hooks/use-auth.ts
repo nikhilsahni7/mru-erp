@@ -40,14 +40,36 @@ export function useAuth() {
         throw error; // Re-throw to be caught by the component
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // No need to check roles here since the teacher-specific endpoint already verifies role
       queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Login successful");
       router.push("/dashboard");
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || "Login failed";
-      toast.error(errorMessage);
+      console.error("Login error details:", error?.response?.data);
+
+      // Get the error message
+      const errorMessage = error?.response?.data?.message || "Login failed";
+
+      // Check for the specific "Only teacher accounts can login" error
+      if (errorMessage.includes("Only teacher accounts can login") ||
+          errorMessage.includes("Only TEACHER accounts")) {
+        console.log("Student attempted to log in to teacher portal");
+        toast.error("Access denied: This portal is exclusively for faculty members.");
+        router.push("/login?error=student_access");
+      }
+      // Check for other role/permission errors
+      else if (error?.response?.status === 403 ||
+               errorMessage.includes("Unauthorized") ||
+               errorMessage.includes("permission")) {
+        toast.error("Access denied: You do not have permission to access the teacher portal.");
+        router.push("/login?error=unauthorized");
+      }
+      // Handle general errors
+      else {
+        toast.error(errorMessage);
+      }
       // Error will be handled in the component
     },
   });

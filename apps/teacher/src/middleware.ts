@@ -21,7 +21,9 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
 
   // For debugging
-  console.log(`Path: ${pathname}, Token: ${accessToken ? "exists" : "missing"}, Public: ${isPublicRoute}`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`Path: ${pathname}, Token: ${accessToken ? "exists" : "missing"}, Public: ${isPublicRoute}`);
+  }
 
   // Handle authentication
   if (!accessToken && !isPublicRoute) {
@@ -44,25 +46,71 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      // Verify that the user has the TEACHER role
-      if (payload.role !== "TEACHER") {
-        console.error("Access denied: User does not have TEACHER role");
+      // Log the token payload for debugging
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Token payload:", {
+          userId: payload.userId,
+          role: payload.role,
+          exp: new Date(payload.exp * 1000).toISOString()
+        });
+      }
+
+      // Verify that the user has the TEACHER role - more flexible checking
+      if (payload.role !== "TEACHER" && payload.role !== "ADMIN") {
+        console.error("Access denied: User does not have TEACHER or ADMIN role");
         const url = new URL("/login", request.url);
         url.searchParams.set("error", "unauthorized");
-        return NextResponse.redirect(url);
+
+        // Clear invalid tokens to prevent loops
+        const response = NextResponse.redirect(url);
+        response.cookies.delete("accessToken");
+        response.cookies.delete("refreshToken");
+
+        return response;
       }
     } catch (error) {
       // If token is invalid, redirect to login
       console.error("Token validation error:", error);
       const url = new URL("/login", request.url);
       url.searchParams.set("error", "invalid");
-      return NextResponse.redirect(url);
+
+      // Clear invalid tokens
+      const response = NextResponse.redirect(url);
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+
+      return response;
     }
   }
 
+  // Special handling for login page when already authenticated
   if (accessToken && pathname === "/login") {
-    // If token exists and trying to access login, redirect to dashboard
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    try {
+      const payload = jwtDecode<TokenPayload>(accessToken);
+
+      // If user is not a teacher but has a token, redirect to login with unauthorized error
+      if (payload.role !== "TEACHER" && payload.role !== "ADMIN") {
+        console.error("Access denied: User does not have TEACHER role");
+        const url = new URL("/login", request.url);
+        url.searchParams.set("error", "student_access");
+
+        // Clear tokens for non-teachers
+        const response = NextResponse.redirect(url);
+        response.cookies.delete("accessToken");
+        response.cookies.delete("refreshToken");
+
+        return response;
+      }
+
+      // If token exists, is valid, and has correct role, redirect to dashboard
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    } catch (error) {
+      // For invalid tokens on login page, just proceed to login
+      const response = NextResponse.next();
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+      return response;
+    }
   }
 
   return NextResponse.next();
