@@ -1,11 +1,11 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { toast } from "sonner";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_URL =  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Important for cookies
+  withCredentials: true, // Important for cookies`  `
   headers: {
     "Content-Type": "application/json",
   },
@@ -63,7 +63,7 @@ api.interceptors.response.use(
         if (typeof window !== "undefined") {
           toast.error("Your session has expired. Please login again.");
           // Redirect to login after a short delay
-          setTimeout(() => {
+          setTimeout(() => { 
             window.location.href = "/login";
           }, 2000);
         }
