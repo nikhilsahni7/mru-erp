@@ -5,8 +5,9 @@ import { DashboardLoading } from "@/components/dashboard/loading-state";
 import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { WelcomeHeader } from "@/components/dashboard/welcome-header";
+import { useAuth } from "@/hooks/use-auth";
 import { useCurrentClasses, useTodayClasses } from "@/hooks/use-teacher-data";
-import { AuthService } from "@/lib/auth";
+import { ApiService } from "@/lib/axios";
 import { formatDate, formatTime, formatTimeFromString } from "@/lib/date-utils";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -23,28 +24,25 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch teacher's profile/details
-  const { data: teacherDetails, isLoading: isLoadingTeacher } = useQuery({
-    queryKey: ["teacherDetails"],
-    queryFn: async () => {
-      return await AuthService.getProfile();
-    },
-  });
+  // Use cached auth profile instead of re-fetching
+  const { user, isLoadingUser } = useAuth();
 
   // Fetch today's classes using hook
   const { data: todayClasses, isLoading: isLoadingToday } = useTodayClasses();
 
   // Fetch current and upcoming classes using hook
-  const { data: currentClassesData, isLoading: isLoadingCurrent } = useCurrentClasses();
+  const { data: currentClassesData, isLoading: isLoadingCurrent } =
+    useCurrentClasses();
 
-  // Fetch courses to count them
-  const { data: courses, isLoading: isLoadingCourses } = useQuery({
+  // Fetch courses count via backend ApiService (non-blocking, no retries)
+  const { data: courses } = useQuery({
     queryKey: ["teacherCourses"],
     queryFn: async () => {
-      const response = await fetch("/api/teacher/courses");
-      if (!response.ok) throw new Error("Failed to fetch courses");
-      return await response.json();
+      const response = await ApiService.getTeacherCourses();
+      return response.data;
     },
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Calculate stats
@@ -55,8 +53,8 @@ export default function DashboardPage() {
     averageAttendance: 83, // Placeholder - would come from a dedicated API
   };
 
-  // Loading state
-  const isLoading = isLoadingTeacher || isLoadingToday || isLoadingCurrent || isLoadingCourses;
+  // Loading state (do not block on courses)
+  const isLoading = isLoadingUser || isLoadingToday || isLoadingCurrent;
 
   if (isLoading) {
     return <DashboardLoading />;
@@ -70,7 +68,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome section */}
       <WelcomeHeader
-        userName={teacherDetails?.name || "Professor"}
+        userName={user?.name || "Professor"}
         currentDate={formatDate(currentTime)}
         currentTime={formatTime(currentTime)}
       />

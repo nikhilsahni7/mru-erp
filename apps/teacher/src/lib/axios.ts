@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { toast } from "sonner";
 
-const API_URL =  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
@@ -39,19 +40,33 @@ api.interceptors.response.use(
     }
 
     // Define login paths that should not trigger a refresh on 401
-    const loginPaths = ["/auth/login", "/auth/student/login", "/auth/teacher/login"];
+    const loginPaths = [
+      "/auth/login",
+      "/auth/student/login",
+      "/auth/teacher/login",
+    ];
 
     // Check if the error is 401, it hasn't been retried yet,
     // AND the original request was NOT to a login path
-    if (error.response?.status === 401 && !(originalRequest as any)._retry &&
-        originalRequest.url && !loginPaths.some(path => originalRequest.url?.endsWith(path)))
-    {
+    if (
+      error.response?.status === 401 &&
+      !(originalRequest as any)._retry &&
+      originalRequest.url &&
+      !loginPaths.some((path) => originalRequest.url?.endsWith(path))
+    ) {
       (originalRequest as any)._retry = true;
-      console.log("Attempting token refresh for original request:", originalRequest.url);
+      console.log(
+        "Attempting token refresh for original request:",
+        originalRequest.url
+      );
 
       try {
         // Call refresh token endpoint
-        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        await axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
         console.log("Token refresh successful, retrying original request");
 
         // Retry the original request
@@ -63,7 +78,7 @@ api.interceptors.response.use(
         if (typeof window !== "undefined") {
           toast.error("Your session has expired. Please login again.");
           // Redirect to login after a short delay
-          setTimeout(() => { 
+          setTimeout(() => {
             window.location.href = "/login";
           }, 2000);
         }
@@ -78,35 +93,26 @@ api.interceptors.response.use(
 
 // Create service functions for API calls
 export const ApiService = {
-
-
   // Teacher LoginCredentials
   teacherLogin: (credentials: { rollNo: string; password: string }) =>
     api.post("/auth/teacher/login", credentials),
 
-  logout: () =>
-    api.post("/auth/logout"),
+  logout: () => api.post("/auth/logout"),
 
   // Use the user/profile endpoint that correctly handles role-based profiles
-  getProfile: () =>
-    api.get("/user/profile"),
+  getProfile: () => api.get("/user/profile"),
 
   // Teacher endpoints
-  getCurrentClasses: () =>
-    api.get("/teacher/current"),
+  getCurrentClasses: () => api.get("/teacher/current"),
 
-  getTodayClasses: () =>
-    api.get("/teacher/today"),
+  getTodayClasses: () => api.get("/teacher/today"),
 
-  getDayTimetable: (day: string) =>
-    api.get(`/teacher/timetable/${day}`),
+  getDayTimetable: (day: string) => api.get(`/teacher/timetable/${day}`),
 
-  getComponents: (day: string) =>
-    api.get(`/teacher/components/${day}`),
+  getComponents: (day: string) => api.get(`/teacher/components/${day}`),
 
   // Attendance endpoints
-  getTodaySessions: () =>
-    api.get("/attendance/today"),
+  getTodaySessions: () => api.get("/attendance/today"),
 
   getAttendanceSession: (sessionId: string) =>
     api.get(`/attendance/session/${sessionId}`),
@@ -120,8 +126,7 @@ export const ApiService = {
     startTime: string;
     endTime: string;
     topic?: string;
-  }) =>
-    api.post('/attendance/session', data),
+  }) => api.post("/attendance/session", data),
 
   markAttendance: (data: {
     sessionId: string;
@@ -130,23 +135,27 @@ export const ApiService = {
       status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
       remark?: string;
     }>;
-  }) =>
-    api.post(`/attendance/mark`, data),
+  }) => api.post(`/attendance/mark`, data),
 
-  updateAttendanceRecord: (recordId: string, data: {
-    status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
-    remark?: string;
-  }) =>
-    api.put(`/attendance/record/${recordId}`, data),
+  updateAttendanceRecord: (
+    recordId: string,
+    data: {
+      status: "PRESENT" | "ABSENT" | "LATE" | "LEAVE" | "EXCUSED";
+      remark?: string;
+    }
+  ) => api.put(`/attendance/record/${recordId}`, data),
 
   getAttendanceSessionsByDateRange: (startDate: Date, endDate: Date) =>
     api.get(`/attendance/sessions`, {
       params: {
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
-      }
+        endDate: endDate.toISOString(),
+      },
     }),
 
   getAttendanceRecord: (recordId: string) =>
     api.get(`/attendance/record/${recordId}`),
+
+  // New: teacher courses
+  getTeacherCourses: () => api.get(`/teacher/courses`),
 };
