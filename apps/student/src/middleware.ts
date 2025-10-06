@@ -1,31 +1,104 @@
+import { jwtDecode } from "jwt-decode";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 // Routes that don't require authentication
 const publicRoutes = ["/login"];
 
+// Token payload interface
+interface TokenPayload {
+  userId: string;
+  role: string;
+  exp: number;
+}
+
 export function middleware(request: NextRequest) {
-  // Check for token in cookies instead of client-side localStorage
+  // Check for token in cookies
   const accessToken = request.cookies.get("accessToken")?.value;
   const { pathname } = request.nextUrl;
 
   // Handle public routes
-  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   // For debugging
-  console.log(`Path: ${pathname}, Token: ${accessToken ? "exists" : "missing"}, Public: ${isPublicRoute}`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `Path: ${pathname}, Token: ${
+        accessToken ? "exists" : "missing"
+      }, Public: ${isPublicRoute}`
+    );
+  }
 
-  // Handle authentication
+  // Handle authentication - redirect to login if no token on protected route
   if (!accessToken && !isPublicRoute) {
-    // If no token and trying to access protected route, redirect to login
     const url = new URL("/login", request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
+  // If token exists and not on public route, validate role only (not expiry)
+  if (accessToken && !isPublicRoute) {
+    try {
+      const payload = jwtDecode<TokenPayload>(accessToken);
+
+      // Log for debugging
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Token payload:", {
+          userId: payload.userId,
+          role: payload.role,
+          exp: new Date(payload.exp * 1000).toISOString(),
+          isExpired: payload.exp * 1000 < Date.now(),
+        });
+      }
+
+      // Only verify role, not expiry - axios interceptor handles refresh
+      if (payload.role !== "STUDENT") {
+        console.error("Access denied: User does not have STUDENT role");
+        const url = new URL("/login", request.url);
+        url.searchParams.set("error", "unauthorized");
+
+        const response = NextResponse.redirect(url);
+        response.cookies.delete("accessToken");
+        response.cookies.delete("refreshToken");
+        return response;
+      }
+    } catch (error) {
+      // Malformed token - redirect to login
+      console.error("Token decode error:", error);
+      const url = new URL("/login", request.url);
+      url.searchParams.set("error", "invalid");
+
+      const response = NextResponse.redirect(url);
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+      return response;
+    }
+  }
+
+  // Redirect authenticated users away from login page
   if (accessToken && pathname === "/login") {
-    // If token exists and trying to access login, redirect to dashboard
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    try {
+      const payload = jwtDecode<TokenPayload>(accessToken);
+
+      // Verify role before redirecting
+      if (payload.role === "STUDENT") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      } else {
+        // Wrong app for this user type
+        const response = NextResponse.redirect(new URL("/login", request.url));
+        response.cookies.delete("accessToken");
+        response.cookies.delete("refreshToken");
+        return response;
+      }
+    } catch (error) {
+      // Invalid token, stay on login
+      const response = NextResponse.next();
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+      return response;
+    }
   }
 
   return NextResponse.next();

@@ -18,11 +18,17 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Handle public routes
-  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   // For debugging
   if (process.env.NODE_ENV !== "production") {
-    console.log(`Path: ${pathname}, Token: ${accessToken ? "exists" : "missing"}, Public: ${isPublicRoute}`);
+    console.log(
+      `Path: ${pathname}, Token: ${
+        accessToken ? "exists" : "missing"
+      }, Public: ${isPublicRoute}`
+    );
   }
 
   // Handle authentication
@@ -33,31 +39,27 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If token exists, validate it has the correct role before allowing access to protected routes
+  // If token exists, do basic validation only - let backend handle detailed checks
   if (accessToken && !isPublicRoute) {
     try {
       const payload = jwtDecode<TokenPayload>(accessToken);
-
-      // Verify that the token is not expired
-      if (payload.exp * 1000 < Date.now()) {
-        const url = new URL("/login", request.url);
-        url.searchParams.set("redirect", pathname);
-        url.searchParams.set("error", "expired");
-        return NextResponse.redirect(url);
-      }
 
       // Log the token payload for debugging
       if (process.env.NODE_ENV !== "production") {
         console.log("Token payload:", {
           userId: payload.userId,
           role: payload.role,
-          exp: new Date(payload.exp * 1000).toISOString()
+          exp: new Date(payload.exp * 1000).toISOString(),
+          isExpired: payload.exp * 1000 < Date.now(),
         });
       }
 
-      // Verify that the user has the TEACHER role - more flexible checking
+      // Only check role, NOT expiry - let axios interceptor handle refresh
+      // Verify that the user has the TEACHER role
       if (payload.role !== "TEACHER" && payload.role !== "ADMIN") {
-        console.error("Access denied: User does not have TEACHER or ADMIN role");
+        console.error(
+          "Access denied: User does not have TEACHER or ADMIN role"
+        );
         const url = new URL("/login", request.url);
         url.searchParams.set("error", "unauthorized");
 
@@ -69,8 +71,8 @@ export function middleware(request: NextRequest) {
         return response;
       }
     } catch (error) {
-      // If token is invalid, redirect to login
-      console.error("Token validation error:", error);
+      // If token is malformed (not just expired), redirect to login
+      console.error("Token decode error:", error);
       const url = new URL("/login", request.url);
       url.searchParams.set("error", "invalid");
 

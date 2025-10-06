@@ -53,17 +53,25 @@ export function useAuth() {
       const errorMessage = error?.response?.data?.message || "Login failed";
 
       // Check for the specific "Only teacher accounts can login" error
-      if (errorMessage.includes("Only teacher accounts can login") ||
-          errorMessage.includes("Only TEACHER accounts")) {
+      if (
+        errorMessage.includes("Only teacher accounts can login") ||
+        errorMessage.includes("Only TEACHER accounts")
+      ) {
         console.log("Student attempted to log in to teacher portal");
-        toast.error("Access denied: This portal is exclusively for faculty members.");
+        toast.error(
+          "Access denied: This portal is exclusively for faculty members."
+        );
         router.push("/login?error=student_access");
       }
       // Check for other role/permission errors
-      else if (error?.response?.status === 403 ||
-               errorMessage.includes("Unauthorized") ||
-               errorMessage.includes("permission")) {
-        toast.error("Access denied: You do not have permission to access the teacher portal.");
+      else if (
+        error?.response?.status === 403 ||
+        errorMessage.includes("Unauthorized") ||
+        errorMessage.includes("permission")
+      ) {
+        toast.error(
+          "Access denied: You do not have permission to access the teacher portal."
+        );
         router.push("/login?error=unauthorized");
       }
       // Handle general errors
@@ -76,10 +84,6 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: AuthService.logout,
-    onMutate: () => {
-      // Clear any refresh token timers or state
-      AuthService.clearRefreshState?.();
-    },
     onSettled: () => {
       // Clear all queries from cache
       queryClient.clear();
@@ -96,15 +100,17 @@ export function useAuth() {
       // Clean up client side even if server request fails
       if (typeof window !== "undefined") {
         // Clear cookies manually as a fallback
-        document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie =
+          "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie =
+          "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       }
     },
   });
 
   // Only consider the user logged in if we have user data and no errors
   // If we're on a public route, we don't need to check this
-  const isLoggedIn = isPublicRoute ? false : (!!profile.data && !profile.isError);
+  const isLoggedIn = isPublicRoute ? false : !!profile.data && !profile.isError;
 
   return {
     user: profile.data,

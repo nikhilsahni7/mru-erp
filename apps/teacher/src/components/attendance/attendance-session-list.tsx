@@ -1,21 +1,44 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AttendanceSession } from "@/hooks/use-teacher-data";
 import { format, isToday, parseISO } from "date-fns";
-import { ArrowUpDown, Calendar, Loader2, Plus, Search, Users } from "lucide-react";
+import {
+  ArrowUpDown,
+  Calendar,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { DeleteSessionDialog } from "./delete-session-dialog";
 
 interface AttendanceSessionListProps {
   sessions: AttendanceSession[] | undefined;
   isLoading: boolean;
 }
 
-export function AttendanceSessionList({ sessions, isLoading }: AttendanceSessionListProps) {
+export function AttendanceSessionList({
+  sessions,
+  isLoading,
+}: AttendanceSessionListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "course">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [componentFilter, setComponentFilter] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Format date display
   const formatDateDisplay = (dateString: string) => {
@@ -40,13 +63,13 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
 
   // Component types from the data for filtering
   const componentTypes = sessions
-    ? [...new Set(sessions.map(s => s.componentType))]
+    ? [...new Set(sessions.map((s) => s.componentType))]
     : [];
 
   // Filter and sort sessions
   const filteredSessions = sessions
     ? sessions
-        .filter(session => {
+        .filter((session) => {
           // Apply search filter
           if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -54,12 +77,13 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
               session.course.name.toLowerCase().includes(query) ||
               session.course.code.toLowerCase().includes(query) ||
               session.section.name.toLowerCase().includes(query) ||
-              (session.group && session.group.name.toLowerCase().includes(query))
+              (session.group &&
+                session.group.name.toLowerCase().includes(query))
             );
           }
           return true;
         })
-        .filter(session => {
+        .filter((session) => {
           // Apply component type filter
           if (componentFilter) {
             return session.componentType === componentFilter;
@@ -88,7 +112,10 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
       <CardHeader>
         <CardTitle>Attendance Sessions</CardTitle>
         <CardDescription>
-          All attendance sessions {sessions && sessions.length > 0 ? `for ${format(new Date(sessions[0].date), "MMMM yyyy")}` : ""}
+          All attendance sessions{" "}
+          {sessions && sessions.length > 0
+            ? `for ${format(new Date(sessions[0].date), "MMMM yyyy")}`
+            : ""}
         </CardDescription>
 
         {/* Filters and search */}
@@ -110,7 +137,7 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
               onChange={(e) => setComponentFilter(e.target.value)}
             >
               <option value="">All Component Types</option>
-              {componentTypes.map(type => (
+              {componentTypes.map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>
@@ -152,7 +179,9 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
         ) : filteredSessions.length === 0 ? (
           <div className="py-12 text-center">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No attendance sessions found</h3>
+            <h3 className="text-lg font-medium mb-2">
+              No attendance sessions found
+            </h3>
             <p className="text-muted-foreground mb-6">
               {searchQuery || componentFilter
                 ? "Try adjusting your search filters"
@@ -168,24 +197,52 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
         ) : (
           <div className="space-y-4">
             {filteredSessions.map((session) => (
-              <Link
+              <div
                 key={session.id}
-                href={`/dashboard/attendance/session/${session.id}`}
-                className="block"
+                className="border rounded-lg p-4 hover:shadow-md transition-shadow"
               >
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-3">
-                    <div className="font-medium text-lg">{session.course.name}</div>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start mb-3 gap-3">
+                  <Link
+                    href={`/dashboard/attendance/session/${session.id}`}
+                    className="flex-1"
+                  >
+                    <div className="font-medium text-lg hover:underline">
+                      {session.course.name}
+                    </div>
+                  </Link>
+
+                  <div className="flex items-center gap-3">
                     <div className="flex items-center text-muted-foreground text-sm">
                       <Calendar className="h-4 w-4 mr-1" />
                       <span>{formatDateDisplay(session.date)}</span>
                       <span className="mx-1">•</span>
                       <span>
-                        {formatTimeDisplay(session.startTime)} - {formatTimeDisplay(session.endTime)}
+                        {formatTimeDisplay(session.startTime)} -{" "}
+                        {formatTimeDisplay(session.endTime)}
                       </span>
                     </div>
-                  </div>
 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSessionToDelete({
+                          id: session.id,
+                          name: `${session.course.name} - ${formatDateDisplay(
+                            session.date
+                          )}`,
+                        });
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <Link href={`/dashboard/attendance/session/${session.id}`}>
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mb-3">
                     <div>Course Code: {session.course.code}</div>
                     <div>Section: {session.section.name}</div>
@@ -199,7 +256,8 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
                       <span>{session.statistics.totalStudents} students</span>
                     </div>
                     <div className="bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-xs">
-                      Present: {session.statistics.presentCount} ({session.statistics.attendancePercentage}%)
+                      Present: {session.statistics.presentCount} (
+                      {session.statistics.attendancePercentage}%)
                     </div>
                     <div className="bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 px-3 py-1 rounded-full text-xs">
                       Absent: {session.statistics.absentCount}
@@ -210,9 +268,18 @@ export function AttendanceSessionList({ sessions, isLoading }: AttendanceSession
                       </div>
                     )}
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
+
+            {sessionToDelete && (
+              <DeleteSessionDialog
+                sessionId={sessionToDelete.id}
+                sessionName={sessionToDelete.name}
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+              />
+            )}
           </div>
         )}
       </CardContent>

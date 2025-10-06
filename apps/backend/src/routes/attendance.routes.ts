@@ -62,4 +62,9 @@ router.get("/range/:componentId", async (req, res) => {
   await AttendanceController.getAttendanceByDateRange(req, res);
 });
 
+// Delete an attendance session
+router.delete("/session/:sessionId", async (req, res) => {
+  await AttendanceController.deleteAttendanceSession(req, res);
+});
+
 export default router;

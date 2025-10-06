@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { toast } from "sonner";
 
 const API_URL =
@@ -6,20 +11,29 @@ const API_URL =
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Important for cookies`  `
+  withCredentials: true, // Critical for cookie-based auth
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 10000,
 });
 
-// Add a request interceptor to include auth token
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+const isLoginPage = () => {
+  if (typeof window === "undefined") return false;
+  return (
+    window.location.pathname === "/login" || window.location.pathname === "/"
+  );
+};
+
 api.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage or cookies if needed
-    // const token = localStorage.getItem("accessToken");
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  (config: InternalAxiosRequestConfig) => {
     return config;
   },
   (error) => {
@@ -27,82 +41,87 @@ api.interceptors.request.use(
   }
 );
 
-// Add a response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // Define login paths that should not trigger a refresh on 401
-    const loginPaths = [
+    // Endpoints that should NOT trigger token refresh
+    const noRetryEndpoints = [
       "/auth/login",
+      "/auth/refresh",
+      "/auth/logout",
       "/auth/student/login",
       "/auth/teacher/login",
     ];
 
-    // Check if the error is 401, it hasn't been retried yet,
-    // AND the original request was NOT to a login path
-    if (
-      error.response?.status === 401 &&
-      !(originalRequest as any)._retry &&
-      originalRequest.url &&
-      !loginPaths.some((path) => originalRequest.url?.endsWith(path))
-    ) {
-      (originalRequest as any)._retry = true;
-      console.log(
-        "Attempting token refresh for original request:",
-        originalRequest.url
-      );
+    const shouldNotRetry = noRetryEndpoints.some((endpoint) =>
+      originalRequest.url?.includes(endpoint)
+    );
 
-      try {
-        // Call refresh token endpoint
-        await axios.post(
-          `${API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-        console.log("Token refresh successful, retrying original request");
+    if (isLoginPage() || shouldNotRetry) {
+      return Promise.reject(error);
+    }
 
-        // Retry the original request
-        return api(originalRequest);
-      } catch (refreshError) {
-        // If refresh token is also expired, redirect to login
-        console.error("Refresh token failed:", refreshError);
-        // Handle logout/redirect to login here
-        if (typeof window !== "undefined") {
-          toast.error("Your session has expired. Please login again.");
-          // Redirect to login after a short delay
-          setTimeout(() => {
-            window.location.href = "/login";
-          }, 2000);
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+
+        try {
+          const refreshResponse = await api.post("/auth/refresh");
+          const newToken = refreshResponse.data.accessToken;
+
+          onRefreshed(newToken);
+          isRefreshing = false;
+
+          return api(originalRequest);
+        } catch (refreshError: any) {
+          isRefreshing = false;
+          refreshSubscribers = [];
+
+          if (!isLoginPage() && typeof window !== "undefined") {
+            const errorMessage =
+              refreshError?.response?.data?.message ||
+              "Session expired. Please login again.";
+            toast.error(errorMessage);
+
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 1500);
+          }
+
+          return Promise.reject(refreshError);
         }
-        return Promise.reject(refreshError);
+      } else {
+        return new Promise((resolve) => {
+          refreshSubscribers.push((token: string) => {
+            resolve(api(originalRequest));
+          });
+        });
       }
     }
 
-    // Return any other error
     return Promise.reject(error);
   }
 );
-
-// Create service functions for API calls
 export const ApiService = {
-  // Teacher LoginCredentials
   teacherLogin: (credentials: { rollNo: string; password: string }) =>
     api.post("/auth/teacher/login", credentials),
 
   logout: () => api.post("/auth/logout"),
 
-  // Use the user/profile endpoint that correctly handles role-based profiles
   getProfile: () => api.get("/user/profile"),
 
-  // Teacher endpoints
   getCurrentClasses: () => api.get("/teacher/current"),
 
   getTodayClasses: () => api.get("/teacher/today"),
@@ -111,7 +130,6 @@ export const ApiService = {
 
   getComponents: (day: string) => api.get(`/teacher/components/${day}`),
 
-  // Attendance endpoints
   getTodaySessions: () => api.get("/attendance/today"),
 
   getAttendanceSession: (sessionId: string) =>
@@ -155,6 +173,9 @@ export const ApiService = {
 
   getAttendanceRecord: (recordId: string) =>
     api.get(`/attendance/record/${recordId}`),
+
+  deleteAttendanceSession: (sessionId: string) =>
+    api.delete(`/attendance/session/${sessionId}`),
 
   // New: teacher courses
   getTeacherCourses: () => api.get(`/teacher/courses`),

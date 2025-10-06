@@ -60,10 +60,6 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: AuthService.logout,
-    onMutate: () => {
-      // Clear any refresh token timers or state
-      AuthService.clearRefreshState?.();
-    },
     onSettled: () => {
       // Clear all queries from cache
       queryClient.clear();
@@ -80,15 +76,17 @@ export function useAuth() {
       // Clean up client side even if server request fails
       if (typeof window !== "undefined") {
         // Clear cookies manually as a fallback
-        document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie =
+          "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie =
+          "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       }
     },
   });
 
   // Only consider the user logged in if we have user data and no errors
   // If we're on a public route, we don't need to check this
-  const isLoggedIn = isPublicRoute ? false : (!!user && !isError);
+  const isLoggedIn = isPublicRoute ? false : !!user && !isError;
 
   return {
     user,

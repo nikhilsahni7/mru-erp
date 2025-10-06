@@ -37,4 +37,24 @@ router.get("/courses", async (req, res) => {
   await StudentController.getAllCourses(req, res);
 });
 
+// Get student's attendance for today
+router.get("/attendance/today", async (req, res) => {
+  await StudentController.getTodayAttendance(req, res);
+});
+
+// Get student's attendance by date range
+router.get("/attendance/range", async (req, res) => {
+  await StudentController.getAttendanceByDateRange(req, res);
+});
+
+// Get student's attendance summary (all courses)
+router.get("/attendance/summary", async (req, res) => {
+  await StudentController.getAttendanceSummary(req, res);
+});
+
+// Get student's attendance for a specific course
+router.get("/attendance/course/:courseId", async (req, res) => {
+  await StudentController.getCourseAttendance(req, res);
+});
+
 export default router;

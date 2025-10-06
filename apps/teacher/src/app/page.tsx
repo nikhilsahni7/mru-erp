@@ -6,12 +6,14 @@ import { useEffect } from "react";
 
 export default function HomePage() {
   useEffect(() => {
-    // Check if user is authenticated
-    if (AuthService.isAuthenticated()) {
-      redirect("/dashboard");
-    } else {
-      redirect("/login");
-    }
+    const checkAuth = async () => {
+      if (await AuthService.isAuthenticated()) {
+        redirect("/dashboard");
+      } else {
+        redirect("/login");
+      }
+    };
+    checkAuth();
   }, []);
 
   // Return a loading state while redirecting

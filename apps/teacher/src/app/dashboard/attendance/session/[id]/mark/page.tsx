@@ -2,16 +2,18 @@
 
 import { AttendanceHeader } from "@/components/attendance/attendance-header";
 import { MarkAttendanceForm } from "@/components/attendance/mark-attendance-form";
+import { use } from "react";
 
 interface MarkAttendancePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function MarkAttendancePage({ params }: MarkAttendancePageProps) {
-  // For Next.js compatibility, we'll use direct access for now
-  const { id } = params;
+export default function MarkAttendancePage({
+  params,
+}: MarkAttendancePageProps) {
+  const { id } = use(params);
 
   return (
     <div className="space-y-8">
