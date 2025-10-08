@@ -14,25 +14,31 @@ import userRoutes from "./routes/user.routes";
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "https://mru-erp.nikhilsahni.xyz",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Content-Type",
-      "Accept",
-      "Authorization",
-    ],
-    exposedHeaders: ["Set-Cookie"],
-  })
-);
+// CORS configuration - Allow multiple origins
+const corsOptions: cors.CorsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001", 
+    "http://localhost:3002",
+    "https://mru-erp.nikhilsahni.xyz",
+    // Add your Vercel deployment URLs here
+    /^https:\/\/.*\.vercel\.app$/,
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+    "Cookie",
+  ],
+  exposedHeaders: ["Set-Cookie"],
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 // Enable gzip compression
 app.use(compression());
