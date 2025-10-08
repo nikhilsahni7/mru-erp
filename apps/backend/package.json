@@ -4,9 +4,16 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "tsc"
+    "build": "npm run prisma:generate && tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.0.0",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
@@ -16,7 +23,10 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.0.0",
+    "socket.io": "^4.8.1",
     "zod": "^3.22.2"
   },
   "devDependencies": {

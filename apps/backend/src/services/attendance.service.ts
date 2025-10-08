@@ -1,4 +1,4 @@
-import { AttendanceStatus, prisma } from "db";
+import { AttendanceStatus, prisma } from "../lib/prisma";
 import { AttendanceSessionDTO } from "../types/attendance.types";
 
 // Define a simple interface for record type

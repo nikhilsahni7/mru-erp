@@ -1,13 +1,22 @@
 // src/services/auth.service.ts
 
-import { prisma } from "db";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
+import { prisma } from "../lib/prisma";
 import { verifyPassword } from "../utils/hash";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../utils/jwt";
 
 export class AuthService {
-  static async login(rollNo: string, password: string, req: Request, allowedRole?: string) {
+  static async login(
+    rollNo: string,
+    password: string,
+    req: Request,
+    allowedRole?: string
+  ) {
     // Ensure inputs are valid
     if (!rollNo || !password) {
       throw new Error("Roll number and password are required");
@@ -22,7 +31,9 @@ export class AuthService {
 
     // Check if the role is allowed for this endpoint if a specific role is required
     if (allowedRole && user.role !== allowedRole) {
-      throw new Error(`Unauthorized: Only ${allowedRole.toLowerCase()} accounts can login through this portal`);
+      throw new Error(
+        `Unauthorized: Only ${allowedRole.toLowerCase()} accounts can login through this portal`
+      );
     }
 
     // Verify password
@@ -42,7 +53,7 @@ export class AuthService {
         data: {
           userId: user.id,
           ip: req.ip || "unknown",
-          userAgent: req.headers['user-agent'] || "unknown",
+          userAgent: req.headers["user-agent"] || "unknown",
         },
       });
     } catch (error) {
@@ -71,7 +82,7 @@ export class AuthService {
         userId: payload.userId,
         role: payload.role,
         exp: payload.exp,
-        iat: payload.iat
+        iat: payload.iat,
       });
 
       // Check if userId is valid
@@ -81,7 +92,9 @@ export class AuthService {
 
       // If verification succeeds, find the user
       console.log("Looking for user with ID:", payload.userId);
-      const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+      });
 
       if (!user) {
         console.log("User not found in database with ID:", payload.userId);
@@ -90,7 +103,9 @@ export class AuthService {
         console.log("Total users in database:", userCount);
 
         if (userCount === 0) {
-          throw new Error("No users found in database - database may have been reset");
+          throw new Error(
+            "No users found in database - database may have been reset"
+          );
         }
 
         throw new Error("User not found - token may be for a deleted account");

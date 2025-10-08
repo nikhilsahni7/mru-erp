@@ -1,12 +1,14 @@
-import type { DayOfWeek } from "db";
 import { Request, Response } from "express";
+import type { DayOfWeek } from "../lib/prisma";
 import { TeacherService } from "../services/teacher.service";
 
 export class TeacherController {
   static async getDetails(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
@@ -16,7 +18,7 @@ export class TeacherController {
       console.error("Error fetching teacher details:", error);
       res.status(500).json({
         error: "Failed to retrieve teacher details",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -24,20 +26,33 @@ export class TeacherController {
   static async getTodayClasses(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
       const today = new Date();
-      const dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"][today.getDay()] as DayOfWeek;
+      const dayOfWeek = [
+        "SUNDAY",
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+      ][today.getDay()] as DayOfWeek;
 
-      const classes = await TeacherService.getTeacherTimetableForDay(userId, dayOfWeek);
+      const classes = await TeacherService.getTeacherTimetableForDay(
+        userId,
+        dayOfWeek
+      );
       res.json(classes);
     } catch (error) {
       console.error("Error fetching today's classes:", error);
       res.status(500).json({
         error: "Failed to retrieve today's classes",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -45,7 +60,9 @@ export class TeacherController {
   static async getCurrentAndUpcomingClasses(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
@@ -55,7 +72,7 @@ export class TeacherController {
       console.error("Error fetching current classes:", error);
       res.status(500).json({
         error: "Failed to retrieve current and upcoming classes",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -63,28 +80,41 @@ export class TeacherController {
   static async getDayTimetable(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
       const day = req.params.day as DayOfWeek;
 
       // Validate the day parameter
-      const validDays: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+      const validDays: DayOfWeek[] = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ];
       if (!validDays.includes(day)) {
         return res.status(400).json({
           error: "Invalid day parameter",
-          message: `Day must be one of: ${validDays.join(', ')}`
+          message: `Day must be one of: ${validDays.join(", ")}`,
         });
       }
 
-      const timetable = await TeacherService.getTeacherTimetableForDay(userId, day);
+      const timetable = await TeacherService.getTeacherTimetableForDay(
+        userId,
+        day
+      );
       res.json(timetable);
     } catch (error) {
       console.error(`Error fetching timetable for day:`, error);
       res.status(500).json({
         error: "Failed to retrieve timetable",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -92,7 +122,9 @@ export class TeacherController {
   static async getWeeklyTimetable(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
@@ -102,7 +134,9 @@ export class TeacherController {
 
       // Performance tracking
       const startTime = Date.now();
-      console.log(`[Performance] Starting weekly timetable fetch for teacher ${userId}`);
+      console.log(
+        `[Performance] Starting weekly timetable fetch for teacher ${userId}`
+      );
 
       // TODO: In the future, implement Redis caching here
 
@@ -112,14 +146,16 @@ export class TeacherController {
       // Log performance metrics
       const endTime = Date.now();
       const duration = endTime - startTime;
-      console.log(`[Performance] Weekly timetable fetch completed in ${duration}ms for teacher ${userId}`);
+      console.log(
+        `[Performance] Weekly timetable fetch completed in ${duration}ms for teacher ${userId}`
+      );
 
       res.json(timetable);
     } catch (error) {
       console.error("Error fetching weekly timetable:", error);
       res.status(500).json({
         error: "Failed to retrieve weekly timetable",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -127,7 +163,9 @@ export class TeacherController {
   static async getAllCourses(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
@@ -137,7 +175,7 @@ export class TeacherController {
       console.error("Error fetching courses:", error);
       res.status(500).json({
         error: "Failed to retrieve courses",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -145,28 +183,41 @@ export class TeacherController {
   static async getComponentsByDay(req: Request, res: Response) {
     try {
       if (!req.user || !req.user.id) {
-        return res.status(401).json({ error: "Unauthorized - invalid user token" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
       }
 
       const userId = req.user.id;
       const day = req.params.day as DayOfWeek;
 
       // Validate the day parameter
-      const validDays: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+      const validDays: DayOfWeek[] = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ];
       if (!validDays.includes(day)) {
         return res.status(400).json({
           error: "Invalid day parameter",
-          message: `Day must be one of: ${validDays.join(', ')}`
+          message: `Day must be one of: ${validDays.join(", ")}`,
         });
       }
 
-      const components = await TeacherService.getTeacherComponentsByDay(userId, day);
+      const components = await TeacherService.getTeacherComponentsByDay(
+        userId,
+        day
+      );
       res.json(components);
     } catch (error) {
       console.error(`Error fetching components for day:`, error);
       res.status(500).json({
         error: "Failed to retrieve components",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

@@ -1,10 +1,10 @@
-import type { DayOfWeek } from "db";
-import { prisma } from "db";
+import type { DayOfWeek } from "../lib/prisma";
+import { prisma } from "../lib/prisma";
 
 export class TeacherService {
   static async getTeacherDetails(userId: string): Promise<any> {
     const teacher = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!teacher) {
@@ -22,13 +22,16 @@ export class TeacherService {
       email: teacher.email,
       phone: teacher.phone,
       clg: teacher.clg,
-      branch: teacher.branch
+      branch: teacher.branch,
     };
   }
 
-  static async getTeacherTimetableForDay(userId: string, day: DayOfWeek): Promise<any[]> {
+  static async getTeacherTimetableForDay(
+    userId: string,
+    day: DayOfWeek
+  ): Promise<any[]> {
     const teacher = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!teacher) {
@@ -52,10 +55,10 @@ export class TeacherService {
         component: {
           sectionCourse: {
             teacherId: userId,
-            academicTermId: currentTerm.id
-          }
+            academicTermId: currentTerm.id,
+          },
         },
-        dayOfWeek: day
+        dayOfWeek: day,
       },
       include: {
         component: {
@@ -67,20 +70,20 @@ export class TeacherService {
                   include: {
                     batch: {
                       include: {
-                        program: true
-                      }
-                    }
-                  }
-                }
-              }
+                        program: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
-            group: true
-          }
-        }
+            group: true,
+          },
+        },
       },
       orderBy: {
-        startTime: 'asc'
-      }
+        startTime: "asc",
+      },
     });
 
     // Classes where the teacher is a component-specific instructor
@@ -89,10 +92,10 @@ export class TeacherService {
         component: {
           teacherId: userId,
           sectionCourse: {
-            academicTermId: currentTerm.id
-          }
+            academicTermId: currentTerm.id,
+          },
         },
-        dayOfWeek: day
+        dayOfWeek: day,
       },
       include: {
         component: {
@@ -104,36 +107,38 @@ export class TeacherService {
                   include: {
                     batch: {
                       include: {
-                        program: true
-                      }
-                    }
-                  }
-                }
-              }
+                        program: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
-            group: true
-          }
-        }
+            group: true,
+          },
+        },
       },
       orderBy: {
-        startTime: 'asc'
-      }
+        startTime: "asc",
+      },
     });
 
     // Create a Set of component IDs from main courses to filter out duplicates
-    const mainComponentIds = new Set(mainCourseSchedules.map(schedule => schedule.component.id));
+    const mainComponentIds = new Set(
+      mainCourseSchedules.map((schedule) => schedule.component.id)
+    );
 
     // Filter out component schedules that are already in main course schedules
     const uniqueComponentSchedules = componentSchedules.filter(
-      schedule => !mainComponentIds.has(schedule.component.id)
+      (schedule) => !mainComponentIds.has(schedule.component.id)
     );
 
     // Format and combine the results
     const formatSchedule = (schedule: any) => {
       // Format time values as HH:MM strings
       const formatTimeToString = (dateObj: Date): string => {
-        const hours = dateObj.getHours().toString().padStart(2, '0');
-        const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+        const hours = dateObj.getHours().toString().padStart(2, "0");
+        const minutes = dateObj.getMinutes().toString().padStart(2, "0");
         return `${hours}:${minutes}`;
       };
 
@@ -147,17 +152,19 @@ export class TeacherService {
         section: {
           name: schedule.component.sectionCourse.section.name,
           program: schedule.component.sectionCourse.section.batch.program.code,
-          batch: schedule.component.sectionCourse.section.batch.year
+          batch: schedule.component.sectionCourse.section.batch.year,
         },
-        group: schedule.component.group ? {
-          name: schedule.component.group.name
-        } : null
+        group: schedule.component.group
+          ? {
+              name: schedule.component.group.name,
+            }
+          : null,
       };
     };
 
     const combinedSchedules = [
       ...mainCourseSchedules.map(formatSchedule),
-      ...uniqueComponentSchedules.map(formatSchedule)
+      ...uniqueComponentSchedules.map(formatSchedule),
     ];
 
     // Sort by start time using string comparison instead of Date.getTime()
@@ -166,25 +173,37 @@ export class TeacherService {
     );
   }
 
-  static async getCurrentAcademicTerm(): Promise<any> {
-    const today = new Date();
+  static async getCurrentAcademicTerm(targetDate?: Date): Promise<any> {
+    const checkDate = targetDate || new Date();
 
     // Get all academic terms
     const terms = await prisma.academicTerm.findMany();
 
-    // Find a term where today's month and day falls within the term's date range
+    // Find a term where checkDate's month and day falls within the term's date range
     // Ignoring the year to handle data seeded for future years
     for (const term of terms) {
       const termStart = new Date(term.startDate);
       const termEnd = new Date(term.endDate);
 
       // For comparison, set all dates to the same year (current year)
-      const currentYear = today.getFullYear();
+      const currentYear = checkDate.getFullYear();
 
       // Create comparison dates with current year but keeping original month and day
-      const startCompare = new Date(currentYear, termStart.getMonth(), termStart.getDate());
-      const endCompare = new Date(currentYear, termEnd.getMonth(), termEnd.getDate());
-      const todayCompare = new Date(currentYear, today.getMonth(), today.getDate());
+      const startCompare = new Date(
+        currentYear,
+        termStart.getMonth(),
+        termStart.getDate()
+      );
+      const endCompare = new Date(
+        currentYear,
+        termEnd.getMonth(),
+        termEnd.getDate()
+      );
+      const dateCompare = new Date(
+        currentYear,
+        checkDate.getMonth(),
+        checkDate.getDate()
+      );
 
       // Handle academic terms that span across years (e.g., Fall term from Sep to Jan)
       if (termStart.getMonth() > termEnd.getMonth()) {
@@ -192,8 +211,8 @@ export class TeacherService {
         endCompare.setFullYear(currentYear + 1);
       }
 
-      // Check if today is within the term date range
-      if (todayCompare >= startCompare && todayCompare <= endCompare) {
+      // Check if checkDate is within the term date range
+      if (dateCompare >= startCompare && dateCompare <= endCompare) {
         return term;
       }
     }
@@ -203,21 +222,36 @@ export class TeacherService {
     return fallbackTerm;
   }
 
-  static async getTeacherWeeklyTimetable(userId: string): Promise<Record<DayOfWeek, any[]>> {
-    const daysOfWeek: DayOfWeek[] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+  static async getTeacherWeeklyTimetable(
+    userId: string
+  ): Promise<Record<DayOfWeek, any[]>> {
+    const daysOfWeek: DayOfWeek[] = [
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+      "SUNDAY",
+    ];
 
     const timetable: Record<DayOfWeek, any[]> = {} as any;
 
     for (const day of daysOfWeek) {
-      timetable[day] = await TeacherService.getTeacherTimetableForDay(userId, day);
+      timetable[day] = await TeacherService.getTeacherTimetableForDay(
+        userId,
+        day
+      );
     }
 
     return timetable;
   }
 
-  static async getCurrentClassAndUpcoming(userId: string): Promise<{ currentClass: any | null; upcomingClasses: any[] }> {
+  static async getCurrentClassAndUpcoming(
+    userId: string
+  ): Promise<{ currentClass: any | null; upcomingClasses: any[] }> {
     const teacher = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!teacher) {
@@ -233,10 +267,21 @@ export class TeacherService {
     const currentMinute = today.getMinutes();
 
     // Get day of week
-    const dayOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"][today.getDay()] as DayOfWeek;
+    const dayOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ][today.getDay()] as DayOfWeek;
 
     // Get today's classes for the teacher
-    const todayClasses = await this.getTeacherTimetableForDay(userId, dayOfWeek);
+    const todayClasses = await this.getTeacherTimetableForDay(
+      userId,
+      dayOfWeek
+    );
 
     // Calculate current time in minutes for comparison (e.g., 9:30 AM = 9*60 + 30 = 570 minutes)
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
@@ -256,7 +301,10 @@ export class TeacherService {
       const endTimeInMinutes = timeToMinutes(cls.endTime);
 
       // If class is ongoing
-      if (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes) {
+      if (
+        currentTimeInMinutes >= startTimeInMinutes &&
+        currentTimeInMinutes < endTimeInMinutes
+      ) {
         currentClass = cls;
       }
       // If class is upcoming
@@ -266,19 +314,19 @@ export class TeacherService {
     }
 
     // Sort upcoming classes by start time and limit to next 3
-    upcomingClasses.sort((a, b) =>
-      timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+    upcomingClasses.sort(
+      (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
     );
 
     return {
       currentClass: currentClass,
-      upcomingClasses: upcomingClasses.slice(0, 3) // Limit to next 3 classes
+      upcomingClasses: upcomingClasses.slice(0, 3), // Limit to next 3 classes
     };
   }
 
   static async getAllCourses(userId: string): Promise<any[]> {
     const teacher = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!teacher) {
@@ -300,7 +348,7 @@ export class TeacherService {
     const mainCourses = await prisma.sectionCourse.findMany({
       where: {
         teacherId: userId,
-        academicTermId: currentTerm.id
+        academicTermId: currentTerm.id,
       },
       include: {
         course: true,
@@ -308,13 +356,13 @@ export class TeacherService {
           include: {
             batch: {
               include: {
-                program: true
-              }
-            }
-          }
+                program: true,
+              },
+            },
+          },
         },
-        components: true
-      }
+        components: true,
+      },
     });
 
     // Get all components where the teacher is a component-specific instructor
@@ -322,8 +370,8 @@ export class TeacherService {
       where: {
         teacherId: userId,
         sectionCourse: {
-          academicTermId: currentTerm.id
-        }
+          academicTermId: currentTerm.id,
+        },
       },
       include: {
         sectionCourse: {
@@ -333,19 +381,19 @@ export class TeacherService {
               include: {
                 batch: {
                   include: {
-                    program: true
-                  }
-                }
-              }
-            }
-          }
+                    program: true,
+                  },
+                },
+              },
+            },
+          },
         },
-        group: true
-      }
+        group: true,
+      },
     });
 
     // Format main courses
-    const formattedMainCourses = mainCourses.map(sc => ({
+    const formattedMainCourses = mainCourses.map((sc) => ({
       id: sc.courseId,
       code: sc.course.code,
       name: sc.course.name,
@@ -355,24 +403,26 @@ export class TeacherService {
         id: sc.sectionId,
         name: sc.section.name,
         program: sc.section.batch.program.code,
-        batch: sc.section.batch.year
+        batch: sc.section.batch.year,
       },
-      components: sc.components.map(comp => ({
+      components: sc.components.map((comp) => ({
         type: comp.componentType,
-        groupName: comp.groupId ? "Group specific" : "All section"
-      }))
+        groupName: comp.groupId ? "Group specific" : "All section",
+      })),
     }));
 
     // Track courses we've already added
-    const addedCourses = new Set(mainCourses.map(sc => `${sc.courseId}-${sc.sectionId}`));
+    const addedCourses = new Set(
+      mainCourses.map((sc) => `${sc.courseId}-${sc.sectionId}`)
+    );
 
     // Format component-specific courses
     const formattedComponentCourses = components
-      .filter(comp => {
+      .filter((comp) => {
         const key = `${comp.sectionCourse.courseId}-${comp.sectionCourse.sectionId}`;
         return !addedCourses.has(key);
       })
-      .map(comp => ({
+      .map((comp) => ({
         id: comp.sectionCourse.courseId,
         code: comp.sectionCourse.course.code,
         name: comp.sectionCourse.course.name,
@@ -382,20 +432,29 @@ export class TeacherService {
           id: comp.sectionCourse.sectionId,
           name: comp.sectionCourse.section.name,
           program: comp.sectionCourse.section.batch.program.code,
-          batch: comp.sectionCourse.section.batch.year
+          batch: comp.sectionCourse.section.batch.year,
         },
-        components: [{
-          type: comp.componentType,
-          groupName: comp.groupId ? (comp.group ? comp.group.name : "Group specific") : "All section"
-        }]
+        components: [
+          {
+            type: comp.componentType,
+            groupName: comp.groupId
+              ? comp.group
+                ? comp.group.name
+                : "Group specific"
+              : "All section",
+          },
+        ],
       }));
 
     return [...formattedMainCourses, ...formattedComponentCourses];
   }
 
-  static async getTeacherComponentsByDay(userId: string, day: DayOfWeek): Promise<any[]> {
+  static async getTeacherComponentsByDay(
+    userId: string,
+    day: DayOfWeek
+  ): Promise<any[]> {
     const teacher = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!teacher) {
@@ -422,71 +481,73 @@ export class TeacherService {
             teacherId: userId,
             schedules: {
               some: {
-                dayOfWeek: day
-              }
-            }
+                dayOfWeek: day,
+              },
+            },
           },
           // Components where teacher is the course instructor (for common components with no specific teacher)
           {
             teacherId: null,
             sectionCourse: {
-              teacherId: userId
+              teacherId: userId,
             },
             schedules: {
               some: {
-                dayOfWeek: day
-              }
-            }
-          }
-        ]
+                dayOfWeek: day,
+              },
+            },
+          },
+        ],
       },
       include: {
         sectionCourse: {
           include: {
             course: true,
-            section: true
-          }
+            section: true,
+          },
         },
         group: true,
         schedules: {
           where: {
-            dayOfWeek: day
-          }
-        }
-      }
+            dayOfWeek: day,
+          },
+        },
+      },
     });
 
     // Helper function to format time as string
     const formatTimeToString = (dateObj: Date): string => {
-      const hours = dateObj.getHours().toString().padStart(2, '0');
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      const hours = dateObj.getHours().toString().padStart(2, "0");
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
       return `${hours}:${minutes}`;
     };
 
     // Format the response
-    return components.map(component => {
+    return components.map((component) => {
       return {
         id: component.id,
         componentType: component.componentType,
         course: {
           id: component.sectionCourse.courseId,
           code: component.sectionCourse.course.code,
-          name: component.sectionCourse.course.name
+          name: component.sectionCourse.course.name,
         },
         section: {
           id: component.sectionCourse.sectionId,
-          name: component.sectionCourse.section.name
+          name: component.sectionCourse.section.name,
         },
-        group: component.group ? {
-          id: component.group.id,
-          name: component.group.name
-        } : null,
-        schedules: component.schedules.map(schedule => ({
+        group: component.group
+          ? {
+              id: component.group.id,
+              name: component.group.name,
+            }
+          : null,
+        schedules: component.schedules.map((schedule) => ({
           day: schedule.dayOfWeek,
           startTime: formatTimeToString(schedule.startTime),
           endTime: formatTimeToString(schedule.endTime),
-          roomNumber: schedule.roomNumber
-        }))
+          roomNumber: schedule.roomNumber,
+        })),
       };
     });
   }

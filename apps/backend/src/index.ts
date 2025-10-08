@@ -1,11 +1,11 @@
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import { disconnectRedis } from "db/redis";
 import type { Request, Response } from "express";
 import express from "express";
 import http from "http";
-import { closeSocketServer, createSocketServer } from "mru-socket/server";
+import { disconnectRedis } from "./lib/redis";
+import { closeSocketServer, createSocketServer } from "./lib/socket";
 import attendanceRoutes from "./routes/attendance.routes";
 import authRoutes from "./routes/auth.routes";
 import studentRoutes from "./routes/student.routes";

@@ -1,8 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { AttendanceFormValues, CourseComponent } from "@/hooks/use-attendance-creation";
+import {
+  AttendanceFormValues,
+  CourseComponent,
+} from "@/hooks/use-attendance-creation";
 import { Calendar, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 
@@ -19,7 +36,7 @@ export function CreateSessionForm({
   onSubmit,
   isSubmitting,
   components,
-  componentsLoading
+  componentsLoading,
 }: CreateSessionFormProps) {
   return (
     <Card>
@@ -49,14 +66,15 @@ export function CreateSessionForm({
                       {components?.map((component) => (
                         <option key={component.id} value={component.id}>
                           {component.course.name} - {component.section.name}
-                          {component.group ? ` (${component.group.name})` : ''}
-                          ({component.componentType})
+                          {component.group ? ` (${component.group.name})` : ""}(
+                          {component.componentType})
                         </option>
                       ))}
                     </select>
                   </FormControl>
                   <FormDescription>
-                    Select the course component for which you want to mark attendance
+                    Select the course component for which you want to mark
+                    attendance
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -82,7 +100,8 @@ export function CreateSessionForm({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Date for the attendance session
+                    Select any date for the attendance session (past, present,
+                    or future)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -98,11 +117,7 @@ export function CreateSessionForm({
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input
-                        type="time"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
+                      <Input type="time" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,11 +131,7 @@ export function CreateSessionForm({
                   <FormItem>
                     <FormLabel>End Time</FormLabel>
                     <FormControl>
-                      <Input
-                        type="time"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
+                      <Input type="time" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,5 +1,5 @@
-import type { DayOfWeek } from "db";
-import { prisma } from "db";
+import type { DayOfWeek } from "../lib/prisma";
+import { prisma } from "../lib/prisma";
 
 export class StudentService {
   static async getStudentDetails(userId: string): Promise<any> {

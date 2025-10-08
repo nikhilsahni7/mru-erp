@@ -1,7 +1,7 @@
 // src/controllers/student.controller.ts
 
-import type { DayOfWeek } from "db";
 import { Request, Response } from "express";
+import type { DayOfWeek } from "../lib/prisma";
 import { StudentService } from "../services/student.service";
 
 export class StudentController {

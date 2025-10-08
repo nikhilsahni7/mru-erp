@@ -48,16 +48,30 @@ export function useAttendanceCreation() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseParam = searchParams.get("course");
+  const [selectedDate, setSelectedDate] = useState<string>(
+    format(new Date(), "yyyy-MM-dd")
+  );
   const [currentDay, setCurrentDay] = useState<string>("");
 
-  // Set current day on component mount
+  // Update current day based on selected date
   useEffect(() => {
-    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-    setCurrentDay(days[new Date().getDay()]);
-  }, []);
+    const days = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const date = new Date(selectedDate);
+    setCurrentDay(days[date.getDay()]);
+  }, [selectedDate]);
 
-  // Get components for today
-  const { data: components, isLoading: componentsLoading } = useQuery<CourseComponent[]>({
+  // Get components for selected day
+  const { data: components, isLoading: componentsLoading } = useQuery<
+    CourseComponent[]
+  >({
     queryKey: ["components", currentDay],
     queryFn: async () => {
       if (!currentDay) return [];
@@ -82,16 +96,33 @@ export function useAttendanceCreation() {
   // Watch for component changes to auto-fill time fields
   const selectedComponentId = form.watch("componentId");
 
+  // Watch for date changes to update selected date state
+  const formDate = form.watch("date");
+
+  useEffect(() => {
+    if (formDate && formDate !== selectedDate) {
+      setSelectedDate(formDate);
+      // Clear component selection when date changes
+      form.setValue("componentId", "");
+      form.setValue("startTime", "");
+      form.setValue("endTime", "");
+    }
+  }, [formDate, selectedDate, form]);
+
   useEffect(() => {
     if (components && selectedComponentId) {
-      const selectedComponent = components.find(c => c.id === selectedComponentId);
+      const selectedComponent = components.find(
+        (c) => c.id === selectedComponentId
+      );
 
       if (selectedComponent) {
-        // If there's a schedule for today, set the times
-        const todaySchedule = selectedComponent.schedules.find(s => s.day === currentDay);
-        if (todaySchedule) {
-          form.setValue("startTime", todaySchedule.startTime);
-          form.setValue("endTime", todaySchedule.endTime);
+        // If there's a schedule for the selected day, set the times
+        const daySchedule = selectedComponent.schedules.find(
+          (s) => s.day === currentDay
+        );
+        if (daySchedule) {
+          form.setValue("startTime", daySchedule.startTime);
+          form.setValue("endTime", daySchedule.endTime);
         }
       }
     }
@@ -100,7 +131,7 @@ export function useAttendanceCreation() {
   // Try to preselect course component if passed in URL
   useEffect(() => {
     if (components && courseParam) {
-      const matchedComponent = components.find(c =>
+      const matchedComponent = components.find((c) =>
         c.course.name.toLowerCase().includes(courseParam.toLowerCase())
       );
 
@@ -116,7 +147,9 @@ export function useAttendanceCreation() {
     mutationFn: async (data: AttendanceFormValues) => {
       // Convert time strings to ISO format
       const dateStr = data.date;
-      const startTimeISO = new Date(`${dateStr}T${data.startTime}`).toISOString();
+      const startTimeISO = new Date(
+        `${dateStr}T${data.startTime}`
+      ).toISOString();
       const endTimeISO = new Date(`${dateStr}T${data.endTime}`).toISOString();
 
       const payload = {
@@ -154,19 +187,22 @@ export function useAttendanceCreation() {
       } else {
         console.error("Session ID not found in response:", data);
         toast.error("Error finding session ID. Please check attendance list.");
-        router.push('/dashboard/attendance');
+        router.push("/dashboard/attendance");
       }
     },
     onError: (error: any) => {
       console.error("Create session error:", error);
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create attendance session";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create attendance session";
       toast.error(errorMessage);
     },
   });
 
   // Find the selected component for display
   const selectedComponent = selectedComponentId
-    ? components?.find(c => c.id === selectedComponentId)
+    ? components?.find((c) => c.id === selectedComponentId)
     : null;
 
   // Form submission handler
@@ -181,6 +217,6 @@ export function useAttendanceCreation() {
     selectedComponent,
     currentDay,
     createSession,
-    onSubmit
+    onSubmit,
   };
 }

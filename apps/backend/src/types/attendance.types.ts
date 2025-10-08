@@ -1,4 +1,4 @@
-import { AttendanceStatus } from "db";
+import { AttendanceStatus } from "../lib/prisma";
 
 export interface AttendanceRecordDTO {
   id: string;

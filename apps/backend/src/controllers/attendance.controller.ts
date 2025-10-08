@@ -1,5 +1,5 @@
-import { AttendanceStatus, prisma } from "db";
 import { Request, Response } from "express";
+import { AttendanceStatus, prisma } from "../lib/prisma";
 import { AttendanceService } from "../services/attendance.service";
 import { TeacherService } from "../services/teacher.service";
 

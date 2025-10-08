@@ -1,4 +1,4 @@
-import { prisma } from "db";
+import { prisma } from "./lib/prisma";
 
 async function main() {
   const componentId = "b66d7997-3a77-4c0c-afbd-4b5b5e9e8baf";
@@ -11,13 +11,13 @@ async function main() {
       sectionCourse: {
         include: {
           course: true,
-          section: true
-        }
+          section: true,
+        },
       },
       group: true,
       teacher: true,
-      schedules: true
-    }
+      schedules: true,
+    },
   });
 
   if (!component) {
@@ -25,26 +25,34 @@ async function main() {
     return;
   }
 
-  console.log(`Component: ${component.componentType} for ${component.sectionCourse.course.name}`);
-  console.log(`Group: ${component.group?.name || 'No specific group'}`);
+  console.log(
+    `Component: ${component.componentType} for ${component.sectionCourse.course.name}`
+  );
+  console.log(`Group: ${component.group?.name || "No specific group"}`);
   console.log(`Section: ${component.sectionCourse.section.name}`);
-  console.log(`Teacher: ${component.teacher?.name || 'No specific teacher'}`);
+  console.log(`Teacher: ${component.teacher?.name || "No specific teacher"}`);
 
   console.log("\nClass Schedules:");
-  component.schedules.forEach(schedule => {
-    console.log(`- Day: ${schedule.dayOfWeek}, Time: ${new Date(schedule.startTime).toLocaleTimeString()} - ${new Date(schedule.endTime).toLocaleTimeString()}, Room: ${schedule.roomNumber}`);
+  component.schedules.forEach((schedule) => {
+    console.log(
+      `- Day: ${schedule.dayOfWeek}, Time: ${new Date(
+        schedule.startTime
+      ).toLocaleTimeString()} - ${new Date(
+        schedule.endTime
+      ).toLocaleTimeString()}, Room: ${schedule.roomNumber}`
+    );
   });
 
   // Check if there are any other components for the same course with different groups
   const otherComponents = await prisma.courseComponent.findMany({
     where: {
       sectionCourseId: component.sectionCourseId,
-      id: { not: componentId }
+      id: { not: componentId },
     },
     include: {
       group: true,
-      schedules: true
-    }
+      schedules: true,
+    },
   });
 
   if (otherComponents.length > 0) {
@@ -52,11 +60,17 @@ async function main() {
     for (const comp of otherComponents) {
       console.log(`- Component ID: ${comp.id}`);
       console.log(`  Type: ${comp.componentType}`);
-      console.log(`  Group: ${comp.group?.name || 'No specific group'}`);
+      console.log(`  Group: ${comp.group?.name || "No specific group"}`);
 
       console.log("  Schedules:");
-      comp.schedules.forEach(schedule => {
-        console.log(`  - Day: ${schedule.dayOfWeek}, Time: ${new Date(schedule.startTime).toLocaleTimeString()} - ${new Date(schedule.endTime).toLocaleTimeString()}, Room: ${schedule.roomNumber}`);
+      comp.schedules.forEach((schedule) => {
+        console.log(
+          `  - Day: ${schedule.dayOfWeek}, Time: ${new Date(
+            schedule.startTime
+          ).toLocaleTimeString()} - ${new Date(
+            schedule.endTime
+          ).toLocaleTimeString()}, Room: ${schedule.roomNumber}`
+        );
       });
     }
   }
@@ -65,7 +79,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(e => {
+main().catch((e) => {
   console.error("Error:", e);
   process.exit(1);
 });
