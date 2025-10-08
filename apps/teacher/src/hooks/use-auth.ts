@@ -40,11 +40,19 @@ export function useAuth() {
         throw error; // Re-throw to be caught by the component
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // No need to check roles here since the teacher-specific endpoint already verifies role
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+
+      // Invalidate and refetch user profile before redirecting
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+
+      // Wait a bit for cookies to be set properly
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       toast.success("Login successful");
-      router.push("/dashboard");
+
+      // Use window.location for a full page reload to ensure middleware runs
+      window.location.href = "/dashboard";
     },
     onError: (error: any) => {
       console.error("Login error details:", error?.response?.data);

@@ -181,13 +181,21 @@ export class AuthController {
           path: "/",
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? ".nikhilsahni.xyz"
+              : undefined,
         });
         res.clearCookie("refreshToken", {
           path: "/",
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          domain:
+            process.env.NODE_ENV === "production"
+              ? ".nikhilsahni.xyz"
+              : undefined,
         });
         return res.status(401).json({ message: "Refresh token not found" });
       }
@@ -231,13 +239,21 @@ export class AuthController {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
       res.clearCookie("refreshToken", {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Return appropriate status code and error message
@@ -256,18 +272,26 @@ export class AuthController {
 
   static async logout(req: Request, res: Response) {
     try {
-      // Clear both cookies with proper options
+      // Clear both cookies with proper options - MUST match the options used when setting cookies
       res.clearCookie("refreshToken", {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
       res.clearCookie("accessToken", {
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       res.json({ message: "Logged out successfully" });
