@@ -135,10 +135,10 @@ export class TeacherService {
 
     // Format and combine the results
     const formatSchedule = (schedule: any) => {
-      // Format time values as HH:MM strings
+      // Format time values as HH:MM strings (using UTC to get IST times)
       const formatTimeToString = (dateObj: Date): string => {
-        const hours = dateObj.getHours().toString().padStart(2, "0");
-        const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+        const hours = dateObj.getUTCHours().toString().padStart(2, "0");
+        const minutes = dateObj.getUTCMinutes().toString().padStart(2, "0");
         return `${hours}:${minutes}`;
       };
 
@@ -263,8 +263,9 @@ export class TeacherService {
     }
 
     const today = new Date();
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
+    // Use UTC time to match with stored schedule times (which are IST stored as UTC)
+    const currentHour = today.getUTCHours();
+    const currentMinute = today.getUTCMinutes();
 
     // Get day of week
     const dayOfWeek = [
@@ -515,10 +516,10 @@ export class TeacherService {
       },
     });
 
-    // Helper function to format time as string
+    // Helper function to format time as string (using UTC to get IST times)
     const formatTimeToString = (dateObj: Date): string => {
-      const hours = dateObj.getHours().toString().padStart(2, "0");
-      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const hours = dateObj.getUTCHours().toString().padStart(2, "0");
+      const minutes = dateObj.getUTCMinutes().toString().padStart(2, "0");
       return `${hours}:${minutes}`;
     };
 

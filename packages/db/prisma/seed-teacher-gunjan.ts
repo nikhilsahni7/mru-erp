@@ -1,5 +1,5 @@
-// prisma/seed-teacher-mamta.ts
-// Seed file for Mamta Arora - Teacher with all her courses and schedules
+// prisma/seed-teacher-gunjan.ts
+// Seed file for Gunjan Chandwani - Teacher with all her courses and schedules
 
 import {
   Branch,
@@ -14,19 +14,19 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("\n🎓 Starting Mamta Arora Teacher Seeding...\n");
+  console.log("\n🎓 Starting Gunjan Chandwani Teacher Seeding...\n");
 
-  // 0. CLEANUP - Delete old/duplicate course components for Mamta
-  console.log("🧹 Cleaning up old course components for Mamta Arora...");
+  // 0. CLEANUP - Delete old/duplicate course components for Gunjan
+  console.log("🧹 Cleaning up old course components for Gunjan Chandwani...");
 
-  const oldMamta = await prisma.user.findUnique({
-    where: { rollNo: "MAMTA" },
+  const oldGunjan = await prisma.user.findUnique({
+    where: { rollNo: "GC" },
   });
 
-  if (oldMamta) {
+  if (oldGunjan) {
     // Delete old data in correct order to avoid foreign key constraints
     const oldComponents = await prisma.courseComponent.findMany({
-      where: { teacherId: oldMamta.id },
+      where: { teacherId: oldGunjan.id },
       select: { id: true },
     });
 
@@ -54,52 +54,52 @@ async function main() {
 
       // Delete old components
       await prisma.courseComponent.deleteMany({
-        where: { teacherId: oldMamta.id },
+        where: { teacherId: oldGunjan.id },
       });
 
       // Delete old section courses
       await prisma.sectionCourse.deleteMany({
-        where: { teacherId: oldMamta.id },
+        where: { teacherId: oldGunjan.id },
       });
     }
 
     console.log("   ✅ Cleaned up old data");
   }
 
-  // 1. Create or get Mamta Arora teacher
-  console.log("\n👩‍🏫 Setting up teacher: Mamta Arora...");
+  // 1. Get or Create Gunjan Chandwani teacher
+  console.log("\n👩‍🏫 Setting up teacher: Gunjan Chandwani...");
 
-  let mamtaArora = await prisma.user.findUnique({
-    where: { rollNo: "MAMTA" },
+  let gunjanTeacher = await prisma.user.findUnique({
+    where: { rollNo: "GC" },
   });
 
-  if (!mamtaArora) {
-    mamtaArora = await prisma.user.create({
+  if (!gunjanTeacher) {
+    gunjanTeacher = await prisma.user.create({
       data: {
-        name: "Mamta Arora",
-        rollNo: "MAMTA",
+        name: "Gunjan Chandwani",
+        rollNo: "GC",
         password: await bcrypt.hash("teacher123", 10),
         phone: "9876543210",
-        email: "mamta.arora@mru.edu.in",
+        email: "gunjan.chandwani@mru.edu.in",
         clg: "MRU" as Clg,
         branch: "SCHOOL_OF_ENGINEERING" as Branch,
         role: "TEACHER" as Role,
       },
     });
-    console.log("   ✅ Created teacher: Mamta Arora");
+    console.log("   ✅ Created teacher: Gunjan Chandwani");
   } else {
-    console.log("   ✅ Using existing teacher: Mamta Arora");
+    console.log("   ✅ Using existing teacher: Gunjan Chandwani");
   }
 
-  // 2. Get or create department and program
+  // 2. Get or create department and programs
   console.log("\n🏢 Setting up academic structure...");
 
-  let department = await prisma.department.findUnique({
+  let cseDepartment = await prisma.department.findUnique({
     where: { code: "CSE" },
   });
 
-  if (!department) {
-    department = await prisma.department.create({
+  if (!cseDepartment) {
+    cseDepartment = await prisma.department.create({
       data: {
         name: "Computer Science and Engineering",
         code: "CSE",
@@ -110,24 +110,56 @@ async function main() {
     console.log("   ✅ Using existing department: CSE");
   }
 
-  let program = await prisma.program.findFirst({
-    where: {
-      code: "BTECH",
-      departmentId: department.id,
-    },
+  // Get or create programs
+  let cseProgram = await prisma.program.findFirst({
+    where: { code: "CSE", departmentId: cseDepartment.id },
   });
 
-  if (!program) {
-    program = await prisma.program.create({
+  if (!cseProgram) {
+    cseProgram = await prisma.program.create({
       data: {
-        name: "Bachelor of Technology",
-        code: "BTECH",
-        departmentId: department.id,
+        name: "Computer Science and Engineering",
+        code: "CSE",
+        departmentId: cseDepartment.id,
       },
     });
-    console.log("   ✅ Created program: B.Tech");
+    console.log("   ✅ Created program: CSE");
   } else {
-    console.log("   ✅ Using existing program: B.Tech");
+    console.log("   ✅ Using existing program: CSE");
+  }
+
+  let cdfdProgram = await prisma.program.findFirst({
+    where: { code: "CDFD", departmentId: cseDepartment.id },
+  });
+
+  if (!cdfdProgram) {
+    cdfdProgram = await prisma.program.create({
+      data: {
+        name: "Computer Science and Fashion Design",
+        code: "CDFD",
+        departmentId: cseDepartment.id,
+      },
+    });
+    console.log("   ✅ Created program: CDFD");
+  } else {
+    console.log("   ✅ Using existing program: CDFD");
+  }
+
+  let aimlProgram = await prisma.program.findFirst({
+    where: { code: "AI-ML", departmentId: cseDepartment.id },
+  });
+
+  if (!aimlProgram) {
+    aimlProgram = await prisma.program.create({
+      data: {
+        name: "Artificial Intelligence and Machine Learning",
+        code: "AI-ML",
+        departmentId: cseDepartment.id,
+      },
+    });
+    console.log("   ✅ Created program: AI-ML");
+  } else {
+    console.log("   ✅ Using existing program: AI-ML");
   }
 
   // 3. Get or create academic term
@@ -153,10 +185,13 @@ async function main() {
   console.log("\n📚 Creating courses...");
 
   const coursesData = [
-    { code: "CST1_WD", name: "Web Development I", credits: 2 },
-    { code: "OOPS", name: "Object Oriented Programming", credits: 3 },
-    { code: "OOPS_LAB", name: "Object Oriented Programming Lab", credits: 1 },
-    { code: "ITR_II", name: "Industrial Training Research II", credits: 2 },
+    { code: "CDFD7_CICD", name: "CI/CD Development", credits: 4 },
+    { code: "ADA", name: "Algorithm Design and Analysis", credits: 4 },
+    {
+      code: "CST5_ITR_II",
+      name: "Industrial Training Research II",
+      credits: 2,
+    },
   ];
 
   const courses: any = {};
@@ -177,53 +212,11 @@ async function main() {
   }
 
   // 5. Helper function to get or create batch
-  async function getOrCreateBatch(year: number, programCode: string) {
-    // Get the program first
-    let targetProgram = program;
-
-    // If it's CSTI or CSE, we need different programs
-    if (programCode === "CSTI") {
-      targetProgram = await prisma.program.findFirst({
-        where: {
-          code: "CSTI",
-          departmentId: department!.id,
-        },
-      });
-
-      if (!targetProgram) {
-        targetProgram = await prisma.program.create({
-          data: {
-            name: "Computer Science and Technology (Innovation)",
-            code: "CSTI",
-            departmentId: department!.id,
-          },
-        });
-        console.log("   ✅ Created program: CSTI");
-      }
-    } else if (programCode === "CSE") {
-      targetProgram = await prisma.program.findFirst({
-        where: {
-          code: "CSE",
-          departmentId: department!.id,
-        },
-      });
-
-      if (!targetProgram) {
-        targetProgram = await prisma.program.create({
-          data: {
-            name: "Computer Science and Engineering",
-            code: "CSE",
-            departmentId: department!.id,
-          },
-        });
-        console.log("   ✅ Created program: CSE");
-      }
-    }
-
+  async function getOrCreateBatch(year: number, programId: string) {
     let batch = await prisma.batch.findFirst({
       where: {
         year: year,
-        programId: targetProgram!.id,
+        programId: programId,
       },
     });
 
@@ -231,20 +224,22 @@ async function main() {
       batch = await prisma.batch.create({
         data: {
           year: year,
-          programId: targetProgram!.id,
+          programId: programId,
         },
       });
-      console.log(`   ✅ Created batch: ${year} for ${programCode}`);
+      console.log(`   ✅ Created batch: ${year}`);
     }
     return batch;
-  } // 6. Helper function to get or create section
+  }
+
+  // 6. Helper function to get or create section
   async function getOrCreateSection(
     sectionName: string,
     semester: number,
     batchYear: number,
-    programCode: string = "BTECH"
+    programId: string
   ) {
-    const batch = await getOrCreateBatch(batchYear, programCode);
+    const batch = await getOrCreateBatch(batchYear, programId);
 
     let section = await prisma.section.findFirst({
       where: {
@@ -291,38 +286,34 @@ async function main() {
   // 7. Create sections for all classes
   console.log("\n🏫 Setting up sections...");
 
-  // CSE1B - Semester 1, Batch 2024 - Program: CSE (not BTECH!)
-  const cse1b = await getOrCreateSection("B", 1, 2024, "CSE");
+  // CDFD 7A - Semester 7, Batch 2022
+  const cdfd7a = await getOrCreateSection("A", 7, 2022, cdfdProgram!.id);
 
-  // CSTI A - Semester 1, Batch 2025 (Computer Science and Technology Innovation)
-  const cstiA = await getOrCreateSection("A", 1, 2025, "CSTI");
+  // CSE 3B - Semester 3, Batch 2024
+  const cse3b = await getOrCreateSection("B", 3, 2024, cseProgram!.id);
 
-  // CSE Section A - Semester 3, Batch 2024 (for students seeded from cse3-seed.ts)
-  const cse3a = await getOrCreateSection("A", 3, 2024, "CSE");
+  // AIML 5A - Semester 5, Batch 2023
+  const aiml5a = await getOrCreateSection("A", 5, 2023, aimlProgram!.id);
 
-  // CSE Section A - Semester 5, Batch 2023 (for students seeded from cse5-seed.ts - majority are 2023 batch)
-  const cse5a = await getOrCreateSection("A", 5, 2023, "CSE");
   console.log("\n📅 Creating course schedules...");
 
   // Helper function to convert IST time to UTC time string
   function convertISTtoUTC(istTime: string): string {
-    const [hours, minutes] = istTime.split(":").map(Number);
+    const [hours, minutes] = istTime.split(':').map(Number);
     // IST is UTC+5:30, so subtract 5 hours 30 minutes
     let utcHours = hours - 5;
     let utcMinutes = minutes - 30;
-
+    
     if (utcMinutes < 0) {
       utcMinutes += 60;
       utcHours -= 1;
     }
-
+    
     if (utcHours < 0) {
       utcHours += 24;
     }
-
-    return `${utcHours.toString().padStart(2, "0")}:${utcMinutes
-      .toString()
-      .padStart(2, "0")}`;
+    
+    return `${utcHours.toString().padStart(2, '0')}:${utcMinutes.toString().padStart(2, '0')}`;
   }
 
   // Helper function to create course component with schedules
@@ -344,7 +335,7 @@ async function main() {
       where: {
         sectionId: sectionId,
         courseId: course.id,
-        teacherId: mamtaArora!.id,
+        teacherId: gunjanTeacher!.id,
         academicTermId: academicTerm!.id,
       },
     });
@@ -354,7 +345,7 @@ async function main() {
         data: {
           sectionId: sectionId,
           courseId: course.id,
-          teacherId: mamtaArora!.id,
+          teacherId: gunjanTeacher!.id,
           academicTermId: academicTerm!.id,
         },
       });
@@ -382,7 +373,7 @@ async function main() {
         data: {
           sectionCourseId: sectionCourse.id,
           componentType: componentType,
-          teacherId: mamtaArora!.id,
+          teacherId: gunjanTeacher!.id,
           groupId: group?.id,
         },
       });
@@ -393,7 +384,7 @@ async function main() {
       // Convert IST times to UTC before storing
       const utcStartTime = convertISTtoUTC(schedule.startTime);
       const utcEndTime = convertISTtoUTC(schedule.endTime);
-
+      
       const existing = await prisma.classSchedule.findFirst({
         where: {
           componentId: component.id,
@@ -421,90 +412,121 @@ async function main() {
   // MONDAY SCHEDULE
   console.log("\n   📆 Monday Classes:");
 
-  // Web Development I for CSE1B - First 2 lab sessions (Group 2 in timetable)
-  console.log(
-    "      - Web Development I (CSE1B) - Lab: 8:10-9:50 AM (2 sessions)"
-  );
-  await createCourseComponent(cse1b.id, "CST1_WD", "LABORATORY", [
-    { day: "MONDAY", startTime: "08:10", endTime: "09:00", room: "LAB08" },
-    { day: "MONDAY", startTime: "09:00", endTime: "09:50", room: "LAB08" },
+  // CDFD7_CICD(T) - Lecture
+  console.log("      - CDFD7_CICD (CDFD 7A) - Lecture: 12:20-13:10 PM");
+  await createCourseComponent(cdfd7a.id, "CDFD7_CICD", "LECTURE", [
+    { day: "MONDAY", startTime: "12:20", endTime: "13:10", room: "LT04" },
   ]);
 
-  // Web Development I for CSTI-A - Last 2 lab sessions
-  console.log(
-    "      - Web Development I (CSTI-A) - Lab: 9:50-11:30 AM (2 sessions)"
-  );
-  await createCourseComponent(cstiA.id, "CST1_WD", "LABORATORY", [
-    { day: "MONDAY", startTime: "09:50", endTime: "10:40", room: "LAB07" },
-    { day: "MONDAY", startTime: "10:40", endTime: "11:30", room: "LAB07" },
+  // ADA(L) - Lecture
+  console.log("      - ADA (CSE 3B) - Lecture: 13:10-14:00 PM");
+  await createCourseComponent(cse3b.id, "ADA", "LECTURE", [
+    { day: "MONDAY", startTime: "13:10", endTime: "14:00", room: "CSE 3B" },
   ]);
 
   // TUESDAY SCHEDULE
   console.log("\n   📆 Tuesday Classes:");
 
-  // OOPS LAB for CSE3A Group 1 - Both sessions in one component
-  console.log("      - OOPS Lab (CSE3A G1) - Lab: 8:10-9:50 AM (2 sessions)");
-  await createCourseComponent(cse3a.id, "OOPS_LAB", "LABORATORY", [
-    { day: "TUESDAY", startTime: "08:10", endTime: "09:00", room: "LAB09" },
-    { day: "TUESDAY", startTime: "09:00", endTime: "09:50", room: "LAB09" },
+  // ADA(L) - Lecture
+  console.log("      - ADA (CSE 3B) - Lecture: 08:10-09:00 AM");
+  await createCourseComponent(cse3b.id, "ADA", "LECTURE", [
+    { day: "TUESDAY", startTime: "08:10", endTime: "09:00", room: "LT03" },
   ]);
 
-  // OOPS Lecture for CSE3A - All lectures in one component
-  console.log("      - OOPS (CSE3A) - Lecture: 2:00-2:50 PM");
-  await createCourseComponent(cse3a.id, "OOPS", "LECTURE", [
-    { day: "TUESDAY", startTime: "14:00", endTime: "14:50", room: "KS02" },
-    { day: "WEDNESDAY", startTime: "12:20", endTime: "13:10", room: "LS03" },
-    { day: "THURSDAY", startTime: "13:10", endTime: "14:00", room: "KS09" },
+  // ADA Lab - 2 periods
+  console.log("      - ADA Lab (CSE 3B) - Lab: 13:10-14:50 PM (2 periods)");
+  await createCourseComponent(cse3b.id, "ADA", "LABORATORY", [
+    { day: "TUESDAY", startTime: "13:10", endTime: "14:00", room: "*199" },
+    { day: "TUESDAY", startTime: "14:00", endTime: "14:50", room: "*199" },
   ]);
 
   // WEDNESDAY SCHEDULE
   console.log("\n   📆 Wednesday Classes:");
 
-  // Industrial Training Research II for CSE5A
-  console.log("      - ITR II (CSE5A) - Lecture: 8:10-9:00 AM");
-  await createCourseComponent(cse5a.id, "ITR_II", "LECTURE", [
-    { day: "WEDNESDAY", startTime: "08:10", endTime: "09:00", room: "HF09" },
+  // ADA(L) - Lecture
+  console.log("      - ADA (CSE 3B) - Lecture: 09:00-09:50 AM");
+  await createCourseComponent(cse3b.id, "ADA", "LECTURE", [
+    { day: "WEDNESDAY", startTime: "09:00", endTime: "09:50", room: "LT00" },
   ]);
 
-  console.log(
-    "      ✅ Wednesday: OOPS lecture already added in Tuesday section"
-  );
+  // CICD(L) - Lecture
+  console.log("      - CICD (CDFD 7A) - Lecture: 09:50-10:40 AM");
+  await createCourseComponent(cdfd7a.id, "CDFD7_CICD", "LECTURE", [
+    { day: "WEDNESDAY", startTime: "09:50", endTime: "10:40", room: "LS03" },
+  ]);
+
+  // ADA Lab - 2 periods
+  console.log("      - ADA Lab (CSE 3B) - Lab: 13:10-14:50 PM (2 periods)");
+  await createCourseComponent(cse3b.id, "ADA", "LABORATORY", [
+    { day: "WEDNESDAY", startTime: "13:10", endTime: "14:00", room: "LAB04" },
+    { day: "WEDNESDAY", startTime: "14:00", endTime: "14:50", room: "LAB04" },
+  ]);
 
   // THURSDAY SCHEDULE
   console.log("\n   📆 Thursday Classes:");
-  console.log(
-    "      ✅ Thursday: OOPS lecture already added in Tuesday section"
-  );
 
-  console.log("\n📊 SEEDING SUMMARY FOR MAMTA ARORA");
+  // CICD(L) - Lecture
+  console.log("      - CICD (CDFD 7A) - Lecture: 10:40-11:30 AM");
+  await createCourseComponent(cdfd7a.id, "CDFD7_CICD", "LECTURE", [
+    { day: "THURSDAY", startTime: "10:40", endTime: "11:30", room: "LT04" },
+  ]);
+
+  // FRIDAY SCHEDULE
+  console.log("\n   📆 Friday Classes:");
+
+  // CDFD7_CICD(LAB) - 2 periods
+  console.log(
+    "      - CDFD7_CICD Lab (CDFD 7A) - Lab: 08:10-09:50 AM (2 periods)"
+  );
+  await createCourseComponent(cdfd7a.id, "CDFD7_CICD", "LABORATORY", [
+    { day: "FRIDAY", startTime: "08:10", endTime: "09:00", room: "LR05" },
+    { day: "FRIDAY", startTime: "09:00", endTime: "09:50", room: "LR05" },
+  ]);
+
+  // CST5_ITR_II - Lecture
+  console.log("      - ITR-II (AIML 5A) - Lecture: 09:50-10:40 AM");
+  await createCourseComponent(aiml5a.id, "CST5_ITR_II", "LECTURE", [
+    { day: "FRIDAY", startTime: "09:50", endTime: "10:40", room: "AIML 5A" },
+  ]);
+
+  // CICD(L) - Lecture
+  console.log("      - CICD (CDFD 7A) - Lecture: 12:20-13:10 PM");
+  await createCourseComponent(cdfd7a.id, "CDFD7_CICD", "LECTURE", [
+    { day: "FRIDAY", startTime: "12:20", endTime: "13:10", room: "LF06" },
+  ]);
+
+  console.log("\n📊 SEEDING SUMMARY FOR GUNJAN CHANDWANI");
   console.log("=".repeat(60));
-  console.log("Teacher: Mamta Arora (Roll No: MAMTA)");
+  console.log("Teacher: Gunjan Chandwani (Roll No: GC)");
   console.log("Password: teacher123");
   console.log("\nCourses Teaching:");
   console.log("\nMONDAY:");
-  console.log("  • Web Development I (CSE1B) - 8:10-9:50 AM (2 lab sessions)");
-  console.log(
-    "  • Web Development I (CSTI-A) - 9:50-11:30 AM (2 lab sessions)"
-  );
+  console.log("  • CDFD7_CICD (CDFD 7A) - 12:20-13:10 PM (Lecture)");
+  console.log("  • ADA (CSE 3B) - 13:10-14:00 PM (Lecture)");
   console.log("\nTUESDAY:");
-  console.log("  • OOPS Lab (CSE3A G1) - 8:10-9:50 AM (2 lab sessions)");
-  console.log("  • OOPS Lecture (CSE3A) - 2:00-2:50 PM");
+  console.log("  • ADA (CSE 3B) - 08:10-09:00 AM (Lecture)");
+  console.log("  • ADA Lab (CSE 3B) - 13:10-14:50 PM (2 periods)");
   console.log("\nWEDNESDAY:");
-  console.log("  • Industrial Training Research II (CSE5A) - 8:10-9:00 AM");
-  console.log("  • OOPS Lecture (CSE3A) - 12:20-1:10 PM");
+  console.log("  • ADA (CSE 3B) - 09:00-09:50 AM (Lecture)");
+  console.log("  • CICD (CDFD 7A) - 09:50-10:40 AM (Lecture)");
+  console.log("  • ADA Lab (CSE 3B) - 13:10-14:50 PM (2 periods)");
   console.log("\nTHURSDAY:");
-  console.log("  • OOPS Lecture (CSE3A) - 1:10-2:00 PM");
+  console.log("  • CICD (CDFD 7A) - 10:40-11:30 AM (Lecture)");
+  console.log("\nFRIDAY:");
+  console.log("  • CDFD7_CICD Lab (CDFD 7A) - 08:10-09:50 AM (2 periods)");
+  console.log("  • ITR-II (AIML 5A) - 09:50-10:40 AM (Lecture)");
+  console.log("  • CICD (CDFD 7A) - 12:20-13:10 PM (Lecture)");
   console.log("=".repeat(60));
 
-  console.log("\n✅ Mamta Arora teacher seeding completed successfully!");
+  console.log("\n✅ Gunjan Chandwani teacher seeding completed successfully!");
   console.log("\n🔑 Login credentials:");
-  console.log("   Roll No: MAMTA");
+  console.log("   Roll No: GC");
   console.log("   Password: teacher123\n");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error seeding Mamta Arora teacher:", e);
+    console.error("❌ Error seeding Gunjan Chandwani teacher:", e);
     process.exit(1);
   })
   .finally(async () => {

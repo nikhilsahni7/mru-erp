@@ -209,7 +209,7 @@ async function seedStudents(
 
 async function main() {
   console.log(
-    "🔥 Cleaning up previous AI-ML 3rd semester students and related data..."
+    "🔥 Cleaning up previous AI-ML 3rd semester students and related data (incorrect old data)..."
   );
 
   const program = await prisma.program.findFirst({
@@ -224,6 +224,7 @@ async function main() {
       },
       include: {
         students: { select: { id: true } },
+        groups: { select: { id: true } },
       },
     });
 
@@ -232,6 +233,9 @@ async function main() {
         s.students.map((stu) => stu.id)
       );
       const sectionIdsToDelete = sections.map((s) => s.id);
+      const groupIdsToDelete = sections.flatMap((s) =>
+        s.groups.map((g) => g.id)
+      );
 
       if (userIdsToDelete.length > 0) {
         console.log(`- Found ${userIdsToDelete.length} students to delete.`);
@@ -246,6 +250,14 @@ async function main() {
           where: { id: { in: userIdsToDelete } },
         });
         console.log(`🗑️  Deleted ${deletedUsersCount} previous students.`);
+      }
+
+      // Delete groups before sections to avoid foreign key constraint
+      if (groupIdsToDelete.length > 0) {
+        const { count: deletedGroupsCount } = await prisma.group.deleteMany({
+          where: { id: { in: groupIdsToDelete } },
+        });
+        console.log(`🗑️  Deleted ${deletedGroupsCount} previous groups.`);
       }
 
       const { count: deletedSectionsCount } = await prisma.section.deleteMany({
@@ -1280,7 +1292,7 @@ async function main() {
           programCode: "AI-ML",
           programName: "Artificial Intelligence and Machine Learning",
           sectionName,
-          semester: 3,
+          semester: 5,
           batchYear: year,
         };
         await seedStudents(sectionConfig, sectionStudents);
@@ -1289,7 +1301,7 @@ async function main() {
   }
 
   console.log(
-    "\n✅ All AI-ML 3rd Semester student seeding tasks completed successfully!\n"
+    "\n✅ All AI-ML 5th Semester student seeding tasks completed successfully!\n"
   );
 }
 

@@ -249,10 +249,10 @@ export class StudentService {
       dayOfWeek
     );
 
-    // Current time info
+    // Current time info (use UTC to match stored times which are IST stored as UTC)
     const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
+    const currentHour = currentTime.getUTCHours();
+    const currentMinute = currentTime.getUTCMinutes();
 
     // Convert current time to minutes for easier comparison
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
@@ -262,10 +262,10 @@ export class StudentService {
       const startTime = new Date(c.startTime);
       const endTime = new Date(c.endTime);
 
-      const startHour = startTime.getHours();
-      const startMinute = startTime.getMinutes();
-      const endHour = endTime.getHours();
-      const endMinute = endTime.getMinutes();
+      const startHour = startTime.getUTCHours();
+      const startMinute = startTime.getUTCMinutes();
+      const endHour = endTime.getUTCHours();
+      const endMinute = endTime.getUTCMinutes();
 
       // Convert class times to minutes
       const startTimeInMinutes = startHour * 60 + startMinute;
@@ -281,8 +281,8 @@ export class StudentService {
     // Find upcoming classes by comparing just the time portion
     const upcomingClasses = todayClasses.filter((c) => {
       const startTime = new Date(c.startTime);
-      const startHour = startTime.getHours();
-      const startMinute = startTime.getMinutes();
+      const startHour = startTime.getUTCHours();
+      const startMinute = startTime.getUTCMinutes();
 
       // Convert start time to minutes
       const startTimeInMinutes = startHour * 60 + startMinute;
@@ -296,10 +296,10 @@ export class StudentService {
       const startTimeA = new Date(a.startTime);
       const startTimeB = new Date(b.startTime);
 
-      const hoursA = startTimeA.getHours();
-      const minutesA = startTimeA.getMinutes();
-      const hoursB = startTimeB.getHours();
-      const minutesB = startTimeB.getMinutes();
+      const hoursA = startTimeA.getUTCHours();
+      const minutesA = startTimeA.getUTCMinutes();
+      const hoursB = startTimeB.getUTCHours();
+      const minutesB = startTimeB.getUTCMinutes();
 
       const timeInMinutesA = hoursA * 60 + minutesA;
       const timeInMinutesB = hoursB * 60 + minutesB;
@@ -318,7 +318,7 @@ export class StudentService {
       console.log(
         `  - ${
           c.courseName
-        } at ${startTime.getHours()}:${startTime.getMinutes()}`
+        } at ${startTime.getUTCHours()}:${startTime.getUTCMinutes()}`
       );
     });
 
