@@ -47,15 +47,11 @@ export function useAuth() {
       }
     },
     onSuccess: async () => {
-      // Wait for user data to be fetched before redirecting
-      await queryClient.invalidateQueries({ queryKey: ["user"] });
-      await queryClient.refetchQueries({ queryKey: ["user"] });
-      
       toast.success("Login successful");
-      
-      // Use router.refresh() to ensure middleware runs with new cookies
-      router.refresh();
-      router.push("/dashboard");
+
+      // Use window.location.href for a hard refresh to ensure cookies are properly set
+      // This ensures the middleware will see the cookies on the next page load
+      window.location.href = "/dashboard";
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || "Login failed";

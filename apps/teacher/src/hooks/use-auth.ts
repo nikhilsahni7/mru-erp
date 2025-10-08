@@ -41,17 +41,10 @@ export function useAuth() {
       }
     },
     onSuccess: async (data) => {
-      // No need to check roles here since the teacher-specific endpoint already verifies role
-
-      // Invalidate and refetch user profile before redirecting
-      await queryClient.invalidateQueries({ queryKey: ["user"] });
-
-      // Wait a bit for cookies to be set properly
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
       toast.success("Login successful");
 
-      // Use window.location for a full page reload to ensure middleware runs
+      // Use window.location.href for a hard refresh to ensure cookies are properly set
+      // This ensures the middleware will see the cookies on the next page load
       window.location.href = "/dashboard";
     },
     onError: (error: any) => {
