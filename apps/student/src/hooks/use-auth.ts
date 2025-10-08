@@ -46,9 +46,15 @@ export function useAuth() {
         throw error; // Re-throw to be caught by the component
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+    onSuccess: async () => {
+      // Wait for user data to be fetched before redirecting
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      await queryClient.refetchQueries({ queryKey: ["user"] });
+      
       toast.success("Login successful");
+      
+      // Use router.refresh() to ensure middleware runs with new cookies
+      router.refresh();
       router.push("/dashboard");
     },
     onError: (error: any) => {
