@@ -22,6 +22,7 @@ const corsOptions: cors.CorsOptions = {
     "http://localhost:3002",
     "https://mru-erp.nikhilsahni.xyz",
     "https://mru-erp.vercel.app",
+    "https://student.mru-erp.nikhilsahni.xyz",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
