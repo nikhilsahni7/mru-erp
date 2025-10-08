@@ -135,11 +135,27 @@ export class TeacherService {
 
     // Format and combine the results
     const formatSchedule = (schedule: any) => {
-      // Format time values as HH:MM strings (using UTC to get IST times)
+      // Format time values as HH:MM strings (convert UTC back to IST by adding 5:30)
       const formatTimeToString = (dateObj: Date): string => {
-        const hours = dateObj.getUTCHours().toString().padStart(2, "0");
-        const minutes = dateObj.getUTCMinutes().toString().padStart(2, "0");
-        return `${hours}:${minutes}`;
+        let hours = dateObj.getUTCHours();
+        let minutes = dateObj.getUTCMinutes();
+
+        // Add 5 hours 30 minutes to convert UTC back to IST
+        hours += 5;
+        minutes += 30;
+
+        if (minutes >= 60) {
+          minutes -= 60;
+          hours += 1;
+        }
+
+        if (hours >= 24) {
+          hours -= 24;
+        }
+
+        return `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}`;
       };
 
       return {
@@ -263,9 +279,18 @@ export class TeacherService {
     }
 
     const today = new Date();
-    // Use UTC time to match with stored schedule times (which are IST stored as UTC)
-    const currentHour = today.getUTCHours();
-    const currentMinute = today.getUTCMinutes();
+    // Get current IST time by adding 5:30 to UTC
+    let currentHour = today.getUTCHours() + 5;
+    let currentMinute = today.getUTCMinutes() + 30;
+
+    if (currentMinute >= 60) {
+      currentMinute -= 60;
+      currentHour += 1;
+    }
+
+    if (currentHour >= 24) {
+      currentHour -= 24;
+    }
 
     // Get day of week
     const dayOfWeek = [
@@ -516,11 +541,27 @@ export class TeacherService {
       },
     });
 
-    // Helper function to format time as string (using UTC to get IST times)
+    // Helper function to format time as string (convert UTC back to IST by adding 5:30)
     const formatTimeToString = (dateObj: Date): string => {
-      const hours = dateObj.getUTCHours().toString().padStart(2, "0");
-      const minutes = dateObj.getUTCMinutes().toString().padStart(2, "0");
-      return `${hours}:${minutes}`;
+      let hours = dateObj.getUTCHours();
+      let minutes = dateObj.getUTCMinutes();
+
+      // Add 5 hours 30 minutes to convert UTC back to IST
+      hours += 5;
+      minutes += 30;
+
+      if (minutes >= 60) {
+        minutes -= 60;
+        hours += 1;
+      }
+
+      if (hours >= 24) {
+        hours -= 24;
+      }
+
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}`;
     };
 
     // Format the response

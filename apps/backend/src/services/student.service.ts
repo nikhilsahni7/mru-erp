@@ -249,10 +249,19 @@ export class StudentService {
       dayOfWeek
     );
 
-    // Current time info (use UTC to match stored times which are IST stored as UTC)
+    // Current time info (get IST by adding 5:30 to UTC)
     const currentTime = new Date();
-    const currentHour = currentTime.getUTCHours();
-    const currentMinute = currentTime.getUTCMinutes();
+    let currentHour = currentTime.getUTCHours() + 5;
+    let currentMinute = currentTime.getUTCMinutes() + 30;
+
+    if (currentMinute >= 60) {
+      currentMinute -= 60;
+      currentHour += 1;
+    }
+
+    if (currentHour >= 24) {
+      currentHour -= 24;
+    }
 
     // Convert current time to minutes for easier comparison
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
@@ -262,10 +271,30 @@ export class StudentService {
       const startTime = new Date(c.startTime);
       const endTime = new Date(c.endTime);
 
-      const startHour = startTime.getUTCHours();
-      const startMinute = startTime.getUTCMinutes();
-      const endHour = endTime.getUTCHours();
-      const endMinute = endTime.getUTCMinutes();
+      // Convert UTC to IST by adding 5:30
+      let startHour = startTime.getUTCHours() + 5;
+      let startMinute = startTime.getUTCMinutes() + 30;
+
+      if (startMinute >= 60) {
+        startMinute -= 60;
+        startHour += 1;
+      }
+
+      if (startHour >= 24) {
+        startHour -= 24;
+      }
+
+      let endHour = endTime.getUTCHours() + 5;
+      let endMinute = endTime.getUTCMinutes() + 30;
+
+      if (endMinute >= 60) {
+        endMinute -= 60;
+        endHour += 1;
+      }
+
+      if (endHour >= 24) {
+        endHour -= 24;
+      }
 
       // Convert class times to minutes
       const startTimeInMinutes = startHour * 60 + startMinute;
@@ -281,8 +310,19 @@ export class StudentService {
     // Find upcoming classes by comparing just the time portion
     const upcomingClasses = todayClasses.filter((c) => {
       const startTime = new Date(c.startTime);
-      const startHour = startTime.getUTCHours();
-      const startMinute = startTime.getUTCMinutes();
+
+      // Convert UTC to IST by adding 5:30
+      let startHour = startTime.getUTCHours() + 5;
+      let startMinute = startTime.getUTCMinutes() + 30;
+
+      if (startMinute >= 60) {
+        startMinute -= 60;
+        startHour += 1;
+      }
+
+      if (startHour >= 24) {
+        startHour -= 24;
+      }
 
       // Convert start time to minutes
       const startTimeInMinutes = startHour * 60 + startMinute;
@@ -296,10 +336,30 @@ export class StudentService {
       const startTimeA = new Date(a.startTime);
       const startTimeB = new Date(b.startTime);
 
-      const hoursA = startTimeA.getUTCHours();
-      const minutesA = startTimeA.getUTCMinutes();
-      const hoursB = startTimeB.getUTCHours();
-      const minutesB = startTimeB.getUTCMinutes();
+      // Convert UTC to IST
+      let hoursA = startTimeA.getUTCHours() + 5;
+      let minutesA = startTimeA.getUTCMinutes() + 30;
+
+      if (minutesA >= 60) {
+        minutesA -= 60;
+        hoursA += 1;
+      }
+
+      if (hoursA >= 24) {
+        hoursA -= 24;
+      }
+
+      let hoursB = startTimeB.getUTCHours() + 5;
+      let minutesB = startTimeB.getUTCMinutes() + 30;
+
+      if (minutesB >= 60) {
+        minutesB -= 60;
+        hoursB += 1;
+      }
+
+      if (hoursB >= 24) {
+        hoursB -= 24;
+      }
 
       const timeInMinutesA = hoursA * 60 + minutesA;
       const timeInMinutesB = hoursB * 60 + minutesB;
@@ -308,18 +368,23 @@ export class StudentService {
     });
 
     // Add a debug statement to help diagnose issues
-    console.log(`Current time: ${currentHour}:${currentMinute}`);
+    console.log(`Current IST time: ${currentHour}:${currentMinute}`);
     console.log(
       `Current class: ${currentClass ? currentClass.courseName : "None"}`
     );
     console.log(`Upcoming classes: ${upcomingClasses.length}`);
     upcomingClasses.forEach((c) => {
       const startTime = new Date(c.startTime);
-      console.log(
-        `  - ${
-          c.courseName
-        } at ${startTime.getUTCHours()}:${startTime.getUTCMinutes()}`
-      );
+      let hour = startTime.getUTCHours() + 5;
+      let minute = startTime.getUTCMinutes() + 30;
+      if (minute >= 60) {
+        minute -= 60;
+        hour += 1;
+      }
+      if (hour >= 24) {
+        hour -= 24;
+      }
+      console.log(`  - ${c.courseName} at ${hour}:${minute}`);
     });
 
     return {
