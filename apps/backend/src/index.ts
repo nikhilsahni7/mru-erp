@@ -18,11 +18,10 @@ const app = express();
 const corsOptions: cors.CorsOptions = {
   origin: [
     "http://localhost:3000",
-    "http://localhost:3001", 
+    "http://localhost:3001",
     "http://localhost:3002",
     "https://mru-erp.nikhilsahni.xyz",
-    // Add your Vercel deployment URLs here
-    /^https:\/\/.*\.vercel\.app$/,
+    "https://mru-erp.vercel.app",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
