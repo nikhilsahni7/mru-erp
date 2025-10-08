@@ -2,6 +2,7 @@
   "name": "mru-erp",
   "module": "index.ts",
   "type": "module",
+  "packageManager": "bun@1.2.23",
   "devDependencies": {
     "@types/bun": "latest",
     "@types/socket.io": "^3.0.2",
