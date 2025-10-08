@@ -26,18 +26,26 @@ export class AuthController {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax", // Changed from strict to lax for better cross-site functioning
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "none" required for cross-site cookies with secure
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined, // Share across subdomains
       });
 
       // Set access token as an HTTP-only cookie
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax", // Changed from strict to lax
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "none" required for cross-site cookies with secure
         maxAge: 15 * 60 * 1000, // 15 minutes
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined, // Share across subdomains
       });
 
       // Also return the token in the response body for clients that need it
@@ -74,18 +82,26 @@ export class AuthController {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Set access token as an HTTP-only cookie
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 15 * 60 * 1000, // 15 minutes
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Also return the token in the response body for clients that need it
@@ -122,18 +138,26 @@ export class AuthController {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Set access token as an HTTP-only cookie
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 15 * 60 * 1000, // 15 minutes
         path: "/", // Accessible from all paths
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Also return the token in the response body for clients that need it
@@ -176,18 +200,26 @@ export class AuthController {
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
         path: "/",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       // Set new access token as an HTTP-only cookie
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 15 * 60 * 1000,
         path: "/",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".nikhilsahni.xyz"
+            : undefined,
       });
 
       res.json({ accessToken });
