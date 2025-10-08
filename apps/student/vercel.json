@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd ../.. && bun install && cd apps/student && bun run build",
+  "outputDirectory": ".next",
+  "installCommand": "bun install",
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./"
+}
