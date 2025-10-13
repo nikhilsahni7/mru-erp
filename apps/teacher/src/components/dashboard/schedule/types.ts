@@ -1,4 +1,5 @@
 export interface ClassDetails {
+  componentId: string;
   courseName: string;
   courseCode: string;
   startTime: string;

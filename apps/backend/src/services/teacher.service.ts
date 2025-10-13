@@ -159,6 +159,7 @@ export class TeacherService {
       };
 
       return {
+        componentId: schedule.component.id,
         courseCode: schedule.component.sectionCourse.course.code,
         courseName: schedule.component.sectionCourse.course.name,
         componentType: schedule.component.componentType,

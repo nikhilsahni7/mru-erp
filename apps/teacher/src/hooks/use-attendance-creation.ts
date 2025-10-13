@@ -48,6 +48,9 @@ export function useAttendanceCreation() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const courseParam = searchParams.get("course");
+  const componentIdParam = searchParams.get("componentId");
+  const startTimeParam = searchParams.get("startTime");
+  const endTimeParam = searchParams.get("endTime");
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd")
   );
@@ -141,6 +144,15 @@ export function useAttendanceCreation() {
       }
     }
   }, [components, courseParam, form]);
+
+  // Auto-fill form when coming from schedule page with componentId and times
+  useEffect(() => {
+    if (componentIdParam && startTimeParam && endTimeParam) {
+      form.setValue("componentId", componentIdParam);
+      form.setValue("startTime", startTimeParam);
+      form.setValue("endTime", endTimeParam);
+    }
+  }, [componentIdParam, startTimeParam, endTimeParam, form]);
 
   // Create attendance session mutation
   const createSession = useMutation({

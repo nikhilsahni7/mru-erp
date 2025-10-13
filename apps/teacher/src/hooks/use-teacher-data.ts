@@ -4,6 +4,7 @@ import { ApiService } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface ClassScheduleEntry {
+  componentId: string;
   courseCode: string;
   courseName: string;
   componentType: string;
@@ -179,7 +180,7 @@ export function useAttendanceSession(sessionId: string) {
     },
     enabled: !!sessionId,
     staleTime: 30000, // 30 seconds
-    retry: 2
+    retry: 2,
   });
 }
 
@@ -218,9 +219,11 @@ export function useCreateAttendanceSession() {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["teacher", "attendance", "today"] });
+      queryClient.invalidateQueries({
+        queryKey: ["teacher", "attendance", "today"],
+      });
       return data;
-    }
+    },
   });
 }
 
@@ -230,7 +233,7 @@ export function useMarkAttendance() {
   return useMutation({
     mutationFn: async (data: {
       sessionId: string;
-      attendanceRecords: AttendanceRecord[]
+      attendanceRecords: AttendanceRecord[];
     }) => {
       const response = await ApiService.markAttendance(data);
       return response.data;
@@ -238,13 +241,13 @@ export function useMarkAttendance() {
     onSuccess: (_, variables) => {
       // Invalidate the specific session query
       queryClient.invalidateQueries({
-        queryKey: ["attendance", "session", variables.sessionId]
+        queryKey: ["attendance", "session", variables.sessionId],
       });
       // Also invalidate today's sessions
       queryClient.invalidateQueries({
-        queryKey: ["teacher", "attendance", "today"]
+        queryKey: ["teacher", "attendance", "today"],
       });
-    }
+    },
   });
 }
 
@@ -259,7 +262,7 @@ export function useUpdateAttendanceRecord() {
     }) => {
       const response = await ApiService.updateAttendanceRecord(data.recordId, {
         status: data.status,
-        remark: data.remark
+        remark: data.remark,
       });
       return response.data;
     },
@@ -268,25 +271,36 @@ export function useUpdateAttendanceRecord() {
 
       if (sessionId) {
         queryClient.invalidateQueries({
-          queryKey: ["attendance", "session", sessionId]
+          queryKey: ["attendance", "session", sessionId],
         });
 
         queryClient.invalidateQueries({
-          queryKey: ["teacher", "attendance", "today"]
+          queryKey: ["teacher", "attendance", "today"],
         });
       }
-    }
+    },
   });
 }
 
-export function useAttendanceSessionsByDateRange(startDate: Date, endDate: Date) {
+export function useAttendanceSessionsByDateRange(
+  startDate: Date,
+  endDate: Date
+) {
   return useQuery({
-    queryKey: ["attendance", "sessions", startDate.toISOString(), endDate.toISOString()],
+    queryKey: [
+      "attendance",
+      "sessions",
+      startDate.toISOString(),
+      endDate.toISOString(),
+    ],
     queryFn: async (): Promise<AttendanceSession[]> => {
-      const response = await ApiService.getAttendanceSessionsByDateRange(startDate, endDate);
+      const response = await ApiService.getAttendanceSessionsByDateRange(
+        startDate,
+        endDate
+      );
       return response.data;
     },
-    enabled: !!startDate && !!endDate
+    enabled: !!startDate && !!endDate,
   });
 }
 
