@@ -291,8 +291,8 @@ async function main() {
   // 7. Create sections for all classes
   console.log("\n🏫 Setting up sections...");
 
-  // CSE1B - Semester 1, Batch 2024 - Program: CSE (not BTECH!)
-  const cse1b = await getOrCreateSection("B", 1, 2024, "CSE");
+  // CSE1B - Semester 1, Batch 2025 - Program: CSE (not BTECH!)
+  const cse1b = await getOrCreateSection("B", 1, 2025, "CSE");
 
   // CSTI A - Semester 1, Batch 2025 (Computer Science and Technology Innovation)
   const cstiA = await getOrCreateSection("A", 1, 2025, "CSTI");
