@@ -594,4 +594,222 @@ export class TeacherService {
       };
     });
   }
+
+  // Get all sections with students that a teacher teaches
+  static async getTeacherSectionsWithStudents(userId: string): Promise<any[]> {
+    const teacher = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!teacher) {
+      throw new Error("Teacher not found");
+    }
+
+    if (teacher.role !== "TEACHER") {
+      throw new Error("User is not a teacher");
+    }
+
+    // Get current academic term
+    const currentTerm = await this.getCurrentAcademicTerm();
+
+    if (!currentTerm) {
+      throw new Error("No active academic term found");
+    }
+
+    // Get all sections where teacher teaches (as main instructor or component instructor)
+    const sectionCourses = await prisma.sectionCourse.findMany({
+      where: {
+        OR: [
+          { teacherId: userId },
+          {
+            components: {
+              some: {
+                teacherId: userId,
+              },
+            },
+          },
+        ],
+        academicTermId: currentTerm.id,
+      },
+      include: {
+        course: true,
+        section: {
+          include: {
+            batch: {
+              include: {
+                program: true,
+              },
+            },
+            groups: {
+              orderBy: {
+                name: "asc",
+              },
+            },
+            students: {
+              where: {
+                role: "STUDENT",
+              },
+              orderBy: {
+                rollNo: "asc",
+              },
+              include: {
+                group: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Get unique sections using a Map to avoid duplicates
+    const uniqueSectionsMap = new Map();
+
+    for (const sc of sectionCourses) {
+      const sectionId = sc.section.id;
+
+      // Only add if we haven't seen this section before
+      if (!uniqueSectionsMap.has(sectionId)) {
+        uniqueSectionsMap.set(sectionId, {
+          id: sc.section.id,
+          name: sc.section.name,
+          semester: sc.section.semester,
+          program: {
+            code: sc.section.batch.program.code,
+            name: sc.section.batch.program.name,
+          },
+          batch: sc.section.batch.year,
+          availableGroups: sc.section.groups.map((g) => ({
+            id: g.id,
+            name: g.name,
+          })),
+          students: sc.section.students.map((student) => ({
+            id: student.id,
+            name: student.name,
+            rollNo: student.rollNo,
+            email: student.email,
+            phone: student.phone,
+            group: student.group
+              ? {
+                  id: student.group.id,
+                  name: student.group.name,
+                }
+              : null,
+          })),
+          totalStudents: sc.section.students.length,
+        });
+      }
+    }
+
+    // Convert Map values to array and sort by program code, semester, and section name
+    return Array.from(uniqueSectionsMap.values()).sort((a, b) => {
+      // First sort by program code
+      if (a.program.code !== b.program.code) {
+        return a.program.code.localeCompare(b.program.code);
+      }
+      // Then by semester
+      if (a.semester !== b.semester) {
+        return a.semester - b.semester;
+      }
+      // Finally by section name
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  // Update student group assignments
+  static async updateStudentGroups(
+    userId: string,
+    updates: { studentId: string; groupId: string | null }[]
+  ): Promise<{ success: boolean; updated: number }> {
+    const teacher = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!teacher) {
+      throw new Error("Teacher not found");
+    }
+
+    if (teacher.role !== "TEACHER") {
+      throw new Error("User is not a teacher");
+    }
+
+    // Verify teacher has permission to update these students
+    // (i.e., teacher teaches the section these students belong to)
+    const currentTerm = await this.getCurrentAcademicTerm();
+
+    if (!currentTerm) {
+      throw new Error("No active academic term found");
+    }
+
+    let updatedCount = 0;
+
+    // Process each update in a transaction
+    for (const update of updates) {
+      const student = await prisma.user.findUnique({
+        where: { id: update.studentId },
+        include: {
+          section: true,
+        },
+      });
+
+      if (!student || student.role !== "STUDENT") {
+        continue; // Skip invalid students
+      }
+
+      // Verify teacher teaches this student's section
+      const teacherSectionCourse = await prisma.sectionCourse.findFirst({
+        where: {
+          OR: [
+            {
+              teacherId: userId,
+              sectionId: student.sectionId!,
+              academicTermId: currentTerm.id,
+            },
+            {
+              sectionId: student.sectionId!,
+              academicTermId: currentTerm.id,
+              components: {
+                some: {
+                  teacherId: userId,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      if (!teacherSectionCourse) {
+        throw new Error(
+          `Unauthorized: You don't teach student ${student.name}'s section`
+        );
+      }
+
+      // Verify group belongs to the student's section if groupId is provided
+      if (update.groupId) {
+        const group = await prisma.group.findUnique({
+          where: { id: update.groupId },
+        });
+
+        if (!group || group.sectionId !== student.sectionId) {
+          throw new Error(
+            `Invalid group: Group does not belong to student's section`
+          );
+        }
+      }
+
+      // Update the student's group
+      await prisma.user.update({
+        where: { id: update.studentId },
+        data: {
+          groupId: update.groupId,
+        },
+      });
+
+      updatedCount++;
+    }
+
+    return {
+      success: true,
+      updated: updatedCount,
+    };
+  }
 }

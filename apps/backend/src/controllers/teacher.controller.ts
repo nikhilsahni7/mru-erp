@@ -221,4 +221,66 @@ export class TeacherController {
       });
     }
   }
+
+  static async getSectionsWithStudents(req: Request, res: Response) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
+      }
+
+      const userId = req.user.id;
+      const sections = await TeacherService.getTeacherSectionsWithStudents(
+        userId
+      );
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching sections with students:", error);
+      res.status(500).json({
+        error: "Failed to retrieve sections with students",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  static async updateStudentGroups(req: Request, res: Response) {
+    try {
+      if (!req.user || !req.user.id) {
+        return res
+          .status(401)
+          .json({ error: "Unauthorized - invalid user token" });
+      }
+
+      const userId = req.user.id;
+      const { updates } = req.body;
+
+      // Validate request body
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "updates must be a non-empty array",
+        });
+      }
+
+      // Validate each update has required fields
+      for (const update of updates) {
+        if (!update.studentId) {
+          return res.status(400).json({
+            error: "Invalid update",
+            message: "Each update must have a studentId",
+          });
+        }
+      }
+
+      const result = await TeacherService.updateStudentGroups(userId, updates);
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating student groups:", error);
+      res.status(500).json({
+        error: "Failed to update student groups",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
 }

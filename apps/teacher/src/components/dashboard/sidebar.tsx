@@ -1,6 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Book, Calendar, ChevronDown, ClipboardList, LayoutDashboard, LogOut, MessageSquare, User, X } from "lucide-react";
+import {
+  Book,
+  Calendar,
+  ChevronDown,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { NavItem } from "./nav-item";
 
@@ -19,7 +30,7 @@ export function Sidebar({
   isMobileMenuOpen,
   setMobileMenuOpen,
   pathname,
-  onLogout
+  onLogout,
 }: SidebarProps) {
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
@@ -101,6 +112,13 @@ export function Sidebar({
             icon={<Calendar className="h-5 w-5" />}
             title="Schedule"
             isActive={pathname.includes("/dashboard/schedule")}
+            isSidebarCollapsed={!isSidebarOpen}
+          />
+          <NavItem
+            href="/dashboard/groups"
+            icon={<Users className="h-5 w-5" />}
+            title="Student Groups"
+            isActive={pathname.includes("/dashboard/groups")}
             isSidebarCollapsed={!isSidebarOpen}
           />
           <NavItem

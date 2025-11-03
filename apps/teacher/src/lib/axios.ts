@@ -179,4 +179,11 @@ export const ApiService = {
 
   // New: teacher courses
   getTeacherCourses: () => api.get(`/teacher/courses`),
+
+  // Group management
+  getSectionsWithStudents: () => api.get(`/teacher/sections/students`),
+
+  updateStudentGroups: (
+    updates: Array<{ studentId: string; groupId: string | null }>
+  ) => api.put(`/teacher/students/groups`, { updates }),
 };

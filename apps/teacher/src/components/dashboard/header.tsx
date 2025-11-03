@@ -1,7 +1,14 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Bell, HelpCircle, LogOut, Menu, RefreshCw, User } from "lucide-react";
 import Link from "next/link";
 
@@ -20,12 +27,15 @@ export function Header({
   userInitials,
   pathname,
   onToggleMobileMenu,
-  onLogout
+  onLogout,
 }: HeaderProps) {
   const getPageTitle = () => {
     if (pathname === "/dashboard") return "Dashboard";
-    if (pathname.includes("/dashboard/attendance")) return "Attendance Management";
+    if (pathname.includes("/dashboard/attendance"))
+      return "Attendance Management";
     if (pathname.includes("/dashboard/schedule")) return "Class Schedule";
+    if (pathname.includes("/dashboard/groups"))
+      return "Student Group Management";
     if (pathname.includes("/dashboard/messages")) return "Messages";
     if (pathname.includes("/dashboard/profile")) return "Profile";
     return "";
@@ -52,7 +62,11 @@ export function Header({
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground relative"
+          >
             <Bell className="h-5 w-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
           </Button>
@@ -70,7 +84,9 @@ export function Header({
                 </Avatar>
                 <div className="flex flex-col items-start text-sm">
                   <span className="font-medium">{userName}</span>
-                  <span className="text-xs text-muted-foreground">{userRole}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {userRole}
+                  </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>

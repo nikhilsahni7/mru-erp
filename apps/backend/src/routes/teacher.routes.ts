@@ -42,4 +42,14 @@ router.get("/components/:day", async (req, res) => {
   await TeacherController.getComponentsByDay(req, res);
 });
 
+// Get all sections with students that the teacher teaches
+router.get("/sections/students", async (req, res) => {
+  await TeacherController.getSectionsWithStudents(req, res);
+});
+
+// Update student group assignments
+router.put("/students/groups", async (req, res) => {
+  await TeacherController.updateStudentGroups(req, res);
+});
+
 export default router;
